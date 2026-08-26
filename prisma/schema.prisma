@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id             String          @id @default(cuid())
+  name           String
+  email          String          @unique
+  password       String
+  role           String          @default("USER") // ADMIN, USER
+  transportistas Transportista[] @relation("UserTransportistas")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Transportista {
+  id        String    @id @default(cuid())
+  name      String
+  ruc       String    @unique
+  users     User[]    @relation("UserTransportistas")
+  cabezales Cabezal[]
+  liquidaciones Liquidacion[]
+  cierresSemana CierreSemana[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Cabezal {
+  id              String        @id @default(cuid())
+  placa           String        @unique
+  transportistaId String
+  transportista   Transportista @relation(fields: [transportistaId], references: [id], onDelete: Cascade)
+  guias           Guia[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Tarifario {
+  id             String       @id @default(cuid())
+  nombre         String       // ej: "Precios Agosto"
+  fecha_vigencia DateTime     // A partir de qué fecha son válidos
+  activo         Boolean      @default(true)
+  precios        GuiaPrecio[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model GuiaPrecio {
+  id          String    @id @default(cuid())
+  tarifarioId String
+  tarifario   Tarifario @relation(fields: [tarifarioId], references: [id], onDelete: Cascade)
+  codigo      String    // ej: "123" o "123S"
+  tipo        String    // "SECO" o "FRIO"
+  descripcion String
+  valor       Float
+  guias       Guia[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Guia {
+  id                 String          @id @default(cuid())
+  cabezalId          String
+  cabezal            Cabezal         @relation(fields: [cabezalId], references: [id], onDelete: Restrict)
+  guiaPrecioId       String
+  guiaPrecio         GuiaPrecio      @relation(fields: [guiaPrecioId], references: [id], onDelete: Restrict)
+  fecha_guia         DateTime        // Fecha real de la guía, determina el tarifario a usar
+  valor_base_cobrado Float           // Snapshot del valor base en ese momento
+  cliente_destino    String          // ej: "POFASA", "AGROPESA", u otros
+  codigos_evaluados  String?         // ej: "123, 124, 125S"
+  estado             String          @default("ACTIVA") // ACTIVA, CUADRADA, LIQUIDADA
+  liquidacionId      String?
+  liquidacion        Liquidacion?    @relation(fields: [liquidacionId], references: [id], onDelete: SetNull)
+  cierreSemanaId     String?
+  cierreSemana       CierreSemana?   @relation(fields: [cierreSemanaId], references: [id], onDelete: SetNull)
+  adicionales        GuiaAdicional[]
+  valor_ticket       Float           @default(0) // Valor del ticket de la guía
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+}
+
+model CierreSemana {
+  id              String        @id @default(cuid())
+  transportistaId String
+  transportista   Transportista @relation(fields: [transportistaId], references: [id], onDelete: Cascade)
+  fecha_cierre    DateTime      @default(now())
+  total           Float
+  total_tickets   Float         @default(0)
+  guias           Guia[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Liquidacion {
+  id              String        @id @default(cuid())
+  transportistaId String
+  transportista   Transportista @relation(fields: [transportistaId], references: [id], onDelete: Cascade)
+  fecha_inicio    DateTime
+  fecha_fin       DateTime
+  total_pagado    Float
+  total_tickets   Float         @default(0)
+  guias           Guia[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model GuiaAdicional {
+  id        String   @id @default(cuid())
+  guiaId    String
+  guia      Guia     @relation(fields: [guiaId], references: [id], onDelete: Cascade)
+  concepto  String   // ej: "Termo King"
+  valor     Float    // Valor cobrado (puede ser modificado)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AdicionalCatalogo {
+  id            String   @id @default(cuid())
+  concepto      String   @unique
+  valor_defecto Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
