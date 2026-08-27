@@ -3,12 +3,15 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
-export async function actualizarValorGuia(guiaId: string, nuevoValorBase: number, nuevosAdicionales: { id: string; concepto?: string; valor: number }[], cierreSemanaId: string) {
+export async function actualizarValorGuia(guiaId: string, nuevoValorBase: number, nuevoValorTicket: number, nuevosAdicionales: { id: string; concepto?: string; valor: number }[], cierreSemanaId: string) {
   try {
-    // 1. Actualizar el valor base de la guía
+    // 1. Actualizar el valor base de la guía y tickets
     await prisma.guia.update({
       where: { id: guiaId },
-      data: { valor_base_cobrado: nuevoValorBase }
+      data: { 
+        valor_base_cobrado: nuevoValorBase,
+        valor_ticket: nuevoValorTicket
+      }
     });
 
     // 2. Actualizar o crear los adicionales
@@ -44,10 +47,11 @@ export async function actualizarValorGuia(guiaId: string, nuevoValorBase: number
         const adicTotal = g.adicionales.reduce((s, a) => s + a.valor, 0);
         return acc + g.valor_base_cobrado + adicTotal;
       }, 0);
+      const nuevoTotalTickets = cierre.guias.reduce((acc, g) => acc + (g.valor_ticket || 0), 0);
 
       await prisma.cierreSemana.update({
         where: { id: cierreSemanaId },
-        data: { total: nuevoTotal }
+        data: { total: nuevoTotal, total_tickets: nuevoTotalTickets }
       });
     }
 
@@ -90,10 +94,11 @@ export async function eliminarGuiaDeSemana(guiaId: string, cierreSemanaId: strin
           const adicTotal = g.adicionales.reduce((s, a) => s + a.valor, 0);
           return acc + g.valor_base_cobrado + adicTotal;
         }, 0);
+        const nuevoTotalTickets = cierre.guias.reduce((acc, g) => acc + (g.valor_ticket || 0), 0);
 
         await prisma.cierreSemana.update({
           where: { id: cierreSemanaId },
-          data: { total: nuevoTotal }
+          data: { total: nuevoTotal, total_tickets: nuevoTotalTickets }
         });
       }
     }

@@ -27,7 +27,7 @@ export default function MobileNavbar({ user }: { user: any }) {
     { href: '/transportistas', label: 'Transportistas', icon: Truck, show: true },
     { href: '/tarifarios', label: 'Tarifarios', icon: FileSpreadsheet, show: isAdmin },
     { href: '/usuarios', label: 'Usuarios', icon: Users, show: isAdmin },
-    { href: '/configuracion', label: 'Configuración', icon: Settings, show: isAdmin },
+
   ];
 
   return (

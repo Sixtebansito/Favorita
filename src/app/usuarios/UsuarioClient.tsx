@@ -77,7 +77,7 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
             <option value="USER">Usuario (Operador)</option>
             <option value="ADMIN">Administrador</option>
           </select>
-          <button type="submit" className="btn-primary">Registrar</button>
+          <button type="submit" className="btn btn-primary">Registrar</button>
         </form>
       </div>
 
@@ -105,10 +105,10 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
                 <td>{new Date(u.createdAt).toLocaleDateString()}</td>
                 <td>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button onClick={() => handleCambiarPassword(u.id)} className="btn-secondary" style={{ padding: '4px 8px', fontSize: '0.8rem' }}>
+                    <button onClick={() => handleCambiarPassword(u.id)} className="btn btn-secondary" style={{ padding: '0 12px', fontSize: '0.75rem', height: '32px' }}>
                       Cambiar Clave
                     </button>
-                    <button onClick={() => handleEliminar(u.id)} className={styles.deleteBtn} style={{ margin: 0 }}>
+                    <button onClick={() => handleEliminar(u.id)} className="btn btn-danger" style={{ margin: 0, padding: '0 12px', fontSize: '0.75rem', height: '32px' }}>
                       Eliminar
                     </button>
                   </div>

@@ -9,6 +9,7 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
   // Estado para la edición
   const [editingGuiaId, setEditingGuiaId] = useState<string | null>(null);
   const [editBaseValue, setEditBaseValue] = useState<number>(0);
+  const [editTicketValue, setEditTicketValue] = useState<number>(0);
   const [editAdicionales, setEditAdicionales] = useState<{id: string, concepto?: string, valor: number}[]>([]);
   const [newAdicConcepto, setNewAdicConcepto] = useState('');
   const [newAdicValor, setNewAdicValor] = useState('');
@@ -31,6 +32,7 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
   const startEditing = (guia: any) => {
     setEditingGuiaId(guia.id);
     setEditBaseValue(guia.valor_base_cobrado);
+    setEditTicketValue(guia.valor_ticket || 0);
     setEditAdicionales(guia.adicionales.map((a: any) => ({ id: a.id, valor: a.valor })));
   };
 
@@ -48,7 +50,7 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
   const saveEdit = async (cierreSemanaId: string) => {
     if (!editingGuiaId) return;
     setSaving(true);
-    const res = await actualizarValorGuia(editingGuiaId, editBaseValue, editAdicionales, cierreSemanaId);
+    const res = await actualizarValorGuia(editingGuiaId, editBaseValue, editTicketValue, editAdicionales, cierreSemanaId);
     if (res.error) {
       alert("Error al actualizar: " + res.error);
     } else {
@@ -82,12 +84,12 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
 
       {cierres.map((cierre) => {
         // Agrupar guías por cabezal
-        const guiasPorCabezal: Record<string, { cabezal: any, guias: any[], subtotal: number }> = {};
+        const guiasPorCabezal: Record<string, { cabezal: any, guias: any[], subtotal: number, totalTickets: number }> = {};
         
         cierre.guias.forEach((g: any) => {
           const placa = g.cabezal.placa;
           if (!guiasPorCabezal[placa]) {
-            guiasPorCabezal[placa] = { cabezal: g.cabezal, guias: [], subtotal: 0 };
+            guiasPorCabezal[placa] = { cabezal: g.cabezal, guias: [], subtotal: 0, totalTickets: 0 };
           }
           
           const totalAdic = g.adicionales.reduce((acc: number, a: any) => acc + a.valor, 0);
@@ -95,6 +97,7 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
           
           guiasPorCabezal[placa].guias.push(g);
           guiasPorCabezal[placa].subtotal += totalGuia;
+          guiasPorCabezal[placa].totalTickets += (g.valor_ticket || 0);
         });
 
         const cabezalesArray = Object.values(guiasPorCabezal);
@@ -123,12 +126,19 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
                 <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tickets</span>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--foreground)' }}>
+                    ${(cierre.total_tickets || 0).toFixed(2)}
+                  </p>
+                </div>
+                <div style={{ width: '1px', height: '40px', backgroundColor: 'var(--border)' }}></div>
+                <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Semana</span>
                   <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)' }}>
                     ${cierre.total.toFixed(2)}
                   </p>
                 </div>
-                <div style={{ color: 'var(--muted-foreground)', fontSize: '1.25rem' }}>
+                <div style={{ color: 'var(--muted-foreground)', fontSize: '1.25rem', marginLeft: '1rem' }}>
                   {expandedId === cierre.id ? '▼' : '▶'}
                 </div>
               </div>
@@ -140,7 +150,7 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
                   <div key={grupo.cabezal.id} style={{ marginBottom: '2.5rem' }}>
                     <h4 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--primary)', display: 'flex', justifyContent: 'space-between' }}>
                       <span>Cabezal: {grupo.cabezal.placa}</span>
-                      <span>Subtotal: ${grupo.subtotal.toFixed(2)}</span>
+                      <span>Subtotal: ${grupo.subtotal.toFixed(2)} <span style={{ opacity: 0.7, fontSize: '0.9rem', marginLeft: '0.5rem' }}>| Tickets: ${grupo.totalTickets.toFixed(2)}</span></span>
                     </h4>
                     
                     <div className="data-table-container">
@@ -151,6 +161,7 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
                             <th>Destino</th>
                             <th>Códigos Evaluados</th>
                             <th>Valor Base</th>
+                            <th>Tickets</th>
                             <th>Adicionales</th>
                             <th>Total Guía</th>
                             <th style={{ textAlign: 'right' }}>Acciones</th>
@@ -180,6 +191,21 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
                                     />
                                   ) : (
                                     `$${guia.valor_base_cobrado.toFixed(2)}`
+                                  )}
+                                </td>
+
+                                {/* Tickets */}
+                                <td>
+                                  {isEditing ? (
+                                    <input 
+                                      type="number" 
+                                      className="form-input" 
+                                      value={editTicketValue} 
+                                      onChange={(e) => setEditTicketValue(parseFloat(e.target.value) || 0)}
+                                      style={{ width: '80px' }}
+                                    />
+                                  ) : (
+                                    `$${(guia.valor_ticket || 0).toFixed(2)}`
                                   )}
                                 </td>
 
