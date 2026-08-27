@@ -10,10 +10,10 @@ export async function GET() {
       return NextResponse.json({ error: 'backup.json no encontrado' }, { status: 404 });
     }
 
-    const data = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
+    const data: any = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
     
     // Inserción en orden de dependencias
-    const resultados = {};
+    const resultados: Record<string, number> = {};
 
     if (data.User?.length > 0) {
       await prisma.user.createMany({ data: data.User, skipDuplicates: true });
@@ -26,7 +26,6 @@ export async function GET() {
     }
 
     if (data._UserToTransportista?.length > 0) {
-      // Relación m-n (inserción directa si es Postgres, requiere query en crudo a veces, pero Prisma puede fallar con createMany en tablas implícitas. Usamos raw)
       for (const rel of data._UserToTransportista) {
         try {
           await prisma.$executeRaw`INSERT INTO "_UserToTransportista" ("A", "B") VALUES (${rel.A}, ${rel.B}) ON CONFLICT DO NOTHING`;
@@ -41,7 +40,7 @@ export async function GET() {
     }
 
     if (data.Tarifario?.length > 0) {
-      const tarifarios = data.Tarifario.map(t => ({...t, fecha_vigencia: new Date(t.fecha_vigencia)}));
+      const tarifarios = data.Tarifario.map((t: any) => ({...t, fecha_vigencia: new Date(t.fecha_vigencia)}));
       await prisma.tarifario.createMany({ data: tarifarios, skipDuplicates: true });
       resultados.Tarifario = tarifarios.length;
     }
@@ -52,13 +51,13 @@ export async function GET() {
     }
 
     if (data.CierreSemana?.length > 0) {
-      const cierres = data.CierreSemana.map(t => ({...t, fecha_cierre: new Date(t.fecha_cierre)}));
+      const cierres = data.CierreSemana.map((t: any) => ({...t, fecha_cierre: new Date(t.fecha_cierre)}));
       await prisma.cierreSemana.createMany({ data: cierres, skipDuplicates: true });
       resultados.CierreSemana = cierres.length;
     }
 
     if (data.Liquidacion?.length > 0) {
-      const liqs = data.Liquidacion.map(t => ({...t, fecha_inicio: new Date(t.fecha_inicio), fecha_fin: new Date(t.fecha_fin)}));
+      const liqs = data.Liquidacion.map((t: any) => ({...t, fecha_inicio: new Date(t.fecha_inicio), fecha_fin: new Date(t.fecha_fin)}));
       await prisma.liquidacion.createMany({ data: liqs, skipDuplicates: true });
       resultados.Liquidacion = liqs.length;
     }
@@ -69,7 +68,7 @@ export async function GET() {
     }
 
     if (data.Guia?.length > 0) {
-      const guias = data.Guia.map(t => ({...t, fecha_guia: new Date(t.fecha_guia)}));
+      const guias = data.Guia.map((t: any) => ({...t, fecha_guia: new Date(t.fecha_guia)}));
       await prisma.guia.createMany({ data: guias, skipDuplicates: true });
       resultados.Guia = guias.length;
     }
@@ -85,7 +84,7 @@ export async function GET() {
       registros_importados: resultados 
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
