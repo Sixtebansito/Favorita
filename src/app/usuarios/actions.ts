@@ -38,3 +38,20 @@ export async function eliminarUsuario(id: string) {
     return { error: 'No se pudo eliminar el usuario.' };
   }
 }
+
+export async function cambiarPassword(id: string, nuevaPassword: string) {
+  try {
+    if (!nuevaPassword || nuevaPassword.trim().length === 0) {
+      return { error: 'La contraseña no puede estar vacía.' };
+    }
+    
+    await prisma.user.update({
+      where: { id },
+      data: { password: nuevaPassword }
+    });
+    revalidatePath('/usuarios');
+    return { success: true };
+  } catch (error: any) {
+    return { error: 'No se pudo actualizar la contraseña.' };
+  }
+}

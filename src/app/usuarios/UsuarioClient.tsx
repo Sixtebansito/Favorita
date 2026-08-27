@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { crearUsuario, eliminarUsuario } from './actions';
+import { crearUsuario, eliminarUsuario, cambiarPassword } from './actions';
 import styles from './usuario.module.css';
 
 export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
@@ -30,6 +30,18 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
     if (confirm('¿Estás seguro de eliminar este usuario?')) {
       const res = await eliminarUsuario(id);
       if (res.error) alert(res.error);
+    }
+  };
+
+  const handleCambiarPassword = async (id: string) => {
+    const nueva = prompt('Ingrese la nueva contraseña para este usuario:');
+    if (nueva !== null && nueva.trim() !== '') {
+      const res = await cambiarPassword(id, nueva.trim());
+      if (res.error) {
+        alert(res.error);
+      } else {
+        alert('¡Contraseña actualizada con éxito!');
+      }
     }
   };
 
@@ -92,9 +104,14 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
                 </td>
                 <td>{new Date(u.createdAt).toLocaleDateString()}</td>
                 <td>
-                  <button onClick={() => handleEliminar(u.id)} className={styles.deleteBtn}>
-                    Eliminar
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button onClick={() => handleCambiarPassword(u.id)} className="btn-secondary" style={{ padding: '4px 8px', fontSize: '0.8rem' }}>
+                      Cambiar Clave
+                    </button>
+                    <button onClick={() => handleEliminar(u.id)} className={styles.deleteBtn} style={{ margin: 0 }}>
+                      Eliminar
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
