@@ -1,7 +1,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 
-const DB_PATH = './dev.db';
+const DB_PATH = './prisma/dev.db';
 const OUTPUT_FILE = './backup.json';
 
 const tables = [
