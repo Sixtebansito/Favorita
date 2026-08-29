@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
+import bcrypt from 'bcryptjs';
 
 const SESSION_COOKIE_NAME = 'auth_session';
 
@@ -14,12 +15,11 @@ export async function login(formData: FormData) {
     return { error: 'Por favor, ingrese email y contraseña' };
   }
 
-  // Busca el usuario en la BD (En prod las contraseñas deben estar hasheadas con bcrypt, pero aquí haremos una validación simple según el esquema actual)
   const user = await prisma.user.findUnique({
     where: { email }
   });
 
-  if (!user || user.password !== password) {
+  if (!user || !(await bcrypt.compare(password, user.password))) {
     return { error: 'Credenciales inválidas' };
   }
 

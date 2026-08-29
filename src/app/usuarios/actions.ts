@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import bcrypt from 'bcryptjs';
 
 export async function crearUsuario(data: { name: string; email: string; password: string; role: string }) {
   try {
@@ -10,12 +11,13 @@ export async function crearUsuario(data: { name: string; email: string; password
     });
     if (existing) return { error: 'El correo electrónico ya está registrado.' };
 
-    // In a real application, you should hash the password here (e.g. using bcrypt)
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    
     await prisma.user.create({
       data: {
         name: data.name,
         email: data.email,
-        password: data.password, 
+        password: hashedPassword, 
         role: data.role
       }
     });
@@ -45,9 +47,11 @@ export async function cambiarPassword(id: string, nuevaPassword: string) {
       return { error: 'La contraseña no puede estar vacía.' };
     }
     
+    const hashedPassword = await bcrypt.hash(nuevaPassword, 10);
+    
     await prisma.user.update({
       where: { id },
-      data: { password: nuevaPassword }
+      data: { password: hashedPassword }
     });
     revalidatePath('/usuarios');
     return { success: true };

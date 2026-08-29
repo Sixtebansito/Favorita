@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { login } from '@/app/actions/auth';
 import { Truck } from 'lucide-react';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
@@ -114,6 +115,12 @@ export default function LoginPage() {
           >
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
+          
+          <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
+            <Link href="/forgot-password" style={{ color: 'var(--primary)', fontSize: '0.875rem', textDecoration: 'none' }}>
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
         </form>
       </div>
     </div>
