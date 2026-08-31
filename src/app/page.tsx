@@ -56,15 +56,15 @@ async function AdminDashboard() {
         <div className="card-header" style={{ padding: '0 0 1.5rem 0' }}>
           <h2 className="card-title" style={{ fontSize: '1.25rem' }}>Acciones Administrativas Rápidas</h2>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <a href="/transportistas" className="btn btn-primary" style={{ boxShadow: '0 4px 14px 0 rgba(0,0,0,0.1)' }}>
-            <Truck size={16} /> Gestionar Transportistas
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+          <a href="/transportistas" className="btn btn-primary" style={{ boxShadow: '0 4px 14px 0 rgba(0,0,0,0.1)', whiteSpace: 'normal', height: 'auto', minHeight: '3rem', textAlign: 'center' }}>
+            <Truck size={16} style={{ flexShrink: 0 }} /> <span>Gestionar Transportistas</span>
           </a>
-          <a href="/tarifario" className="btn btn-secondary" style={{ boxShadow: '0 4px 14px 0 rgba(0,0,0,0.05)' }}>
-            <TableProperties size={16} /> Tarifario y Destinos
+          <a href="/tarifario" className="btn btn-secondary" style={{ boxShadow: '0 4px 14px 0 rgba(0,0,0,0.05)', whiteSpace: 'normal', height: 'auto', minHeight: '3rem', textAlign: 'center' }}>
+            <TableProperties size={16} style={{ flexShrink: 0 }} /> <span>Tarifario y Destinos</span>
           </a>
-          <a href="/prefacturas" className="btn btn-secondary" style={{ boxShadow: '0 4px 14px 0 rgba(0,0,0,0.05)' }}>
-            <Receipt size={16} /> Ver Liquidaciones
+          <a href="/prefacturas" className="btn btn-secondary" style={{ boxShadow: '0 4px 14px 0 rgba(0,0,0,0.05)', whiteSpace: 'normal', height: 'auto', minHeight: '3rem', textAlign: 'center' }}>
+            <Receipt size={16} style={{ flexShrink: 0 }} /> <span>Ver Liquidaciones</span>
           </a>
         </div>
       </section>
@@ -101,12 +101,12 @@ async function UserDashboard({ session }: { session: any }) {
         <div className="card-header" style={{ padding: '0 0 1.5rem 0' }}>
           <h2 className="card-title" style={{ fontSize: '1.25rem' }}>Opciones Principales</h2>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flexDirection: 'column' }}>
-          <a href="/guias/registro" className="btn btn-primary" style={{ padding: '1.5rem', fontSize: '1.1rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)', justifyContent: 'center' }}>
-            <MapPin size={24} style={{ marginRight: '0.5rem' }} /> Iniciar Registro de Guías
+        <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
+          <a href="/guias/registro" className="btn btn-primary" style={{ padding: '1.5rem', fontSize: '1.1rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)', justifyContent: 'center', whiteSpace: 'normal', height: 'auto', textAlign: 'center' }}>
+            <MapPin size={24} style={{ marginRight: '0.5rem', flexShrink: 0 }} /> <span>Iniciar Registro de Guías</span>
           </a>
-          <a href="/prefacturas" className="btn btn-secondary" style={{ padding: '1.5rem', fontSize: '1.1rem', justifyContent: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)' }}>
-            <Receipt size={24} style={{ marginRight: '0.5rem' }} /> Generar Prefactura / Liquidación
+          <a href="/prefacturas" className="btn btn-secondary" style={{ padding: '1.5rem', fontSize: '1.1rem', justifyContent: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)', whiteSpace: 'normal', height: 'auto', textAlign: 'center' }}>
+            <Receipt size={24} style={{ marginRight: '0.5rem', flexShrink: 0 }} /> <span>Generar Prefactura / Liquidación</span>
           </a>
         </div>
       </section>

@@ -510,13 +510,13 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                     <table className="data-table" style={{ width: '100%', border: 'none' }}>
                       <thead>
                         <tr>
-                          <th>Fecha</th>
                           <th>Código(s)</th>
                           <th>Destino</th>
                           <th>Valor Base</th>
                           <th>Adicionales</th>
                           <th>Total</th>
                           <th>Tickets</th>
+                          <th>Fecha</th>
                           <th style={{ textAlign: 'right' }}>Acciones</th>
                         </tr>
                       </thead>
@@ -527,7 +527,6 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                           const granTotal = guia.valor_base_cobrado + totalAdicional;
                           return (
                             <tr key={guia.id} style={isEditing ? { backgroundColor: 'var(--accent)' } : {}}>
-                              <td>{new Date(guia.fecha_guia).toLocaleDateString('es-ES')}</td>
                               <td>
                                 <span className="badge badge-secondary">{guia.codigos_evaluados}</span>
                               </td>
@@ -602,6 +601,10 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                                   `$${(guia.valor_ticket || 0).toFixed(2)}`
                                 )}
                               </td>
+                              
+                              {/* Fecha */}
+                              <td>{new Date(guia.fecha_guia).toLocaleDateString('es-ES')}</td>
+
                               <td style={{ textAlign: 'right' }}>
                                 {isEditing ? (
                                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>

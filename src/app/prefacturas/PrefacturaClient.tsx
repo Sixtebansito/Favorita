@@ -42,7 +42,7 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
       grupos[key].cantidad += 1;
       grupos[key].total += valorTotal;
     });
-    return Object.values(grupos);
+    return Object.values(grupos).sort((a: any, b: any) => b.valorUnitario - a.valorUnitario);
   };
 
   const exportarAExcel = (reporteParaExportar: any = reporte, fileName: string = `Prefactura_${new Date().getTime()}.csv`) => {

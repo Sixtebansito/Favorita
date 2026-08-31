@@ -157,13 +157,13 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
                       <table className="data-table">
                         <thead>
                           <tr>
-                            <th>Fecha Guía</th>
                             <th>Código(s)</th>
                             <th>Destino</th>
                             <th>Valor Base</th>
                             <th>Tickets</th>
                             <th>Adicionales</th>
                             <th>Total Guía</th>
+                            <th>Fecha Guía</th>
                             <th style={{ textAlign: 'right' }}>Acciones</th>
                           </tr>
                         </thead>
@@ -175,7 +175,6 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
                             
                             return (
                               <tr key={guia.id} style={isEditing ? { backgroundColor: 'var(--accent)' } : {}}>
-                                <td>{new Date(guia.fecha_guia).toLocaleDateString('es-ES')}</td>
                                 <td>{guia.codigos_evaluados}</td>
                                 <td>{guia.guiaPrecio?.descripcion || guia.cliente_destino}</td>
                                 
@@ -256,6 +255,9 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
                                     `$${totalGuia.toFixed(2)}`
                                   )}
                                 </td>
+                                
+                                {/* Fecha */}
+                                <td>{new Date(guia.fecha_guia).toLocaleDateString('es-ES')}</td>
 
                                 {/* Acciones */}
                                 <td style={{ textAlign: 'right' }}>
