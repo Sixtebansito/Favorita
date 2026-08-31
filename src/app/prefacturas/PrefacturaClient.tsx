@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { generarPrefactura, liquidarValores } from './actions';
 import styles from './prefactura.module.css';
+import * as XLSX from 'xlsx';
 
 export default function PrefacturaClient({ transportistas }: { transportistas: any[] }) {
   const [transportistaId, setTransportistaId] = useState('');
@@ -45,30 +46,40 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
     return Object.values(grupos).sort((a: any, b: any) => b.valorUnitario - a.valorUnitario);
   };
 
-  const exportarAExcel = (reporteParaExportar: any = reporte, fileName: string = `Prefactura_${new Date().getTime()}.csv`) => {
+  const exportarAExcel = (reporteParaExportar: any = reporte, fileName: string = `Prefactura_${new Date().getTime()}.xlsx`) => {
     if (!reporteParaExportar) return;
 
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "TIPO,CODIGO,DESTINO,VALOR,CANTIDAD,TOTAL\n";
-
+    const data: any[] = [];
+    
     const addRows = (tipo: string, guiasAgrupadas: any[]) => {
       guiasAgrupadas.forEach((row: any) => {
-        csvContent += `${tipo},${row.codigo},${row.descripcion},${row.valorUnitario.toFixed(2)},${row.cantidad},${row.total.toFixed(2)}\n`;
+        data.push({
+          TIPO: tipo,
+          CODIGO: row.codigo,
+          DESTINO: row.descripcion,
+          VALOR: row.valorUnitario,
+          CANTIDAD: row.cantidad,
+          TOTAL: row.total
+        });
       });
       const subtotal = guiasAgrupadas.reduce((acc, row) => acc + row.total, 0);
-      csvContent += `${tipo} TOTAL,,,,,${subtotal.toFixed(2)}\n`;
+      data.push({
+        TIPO: `${tipo} TOTAL`,
+        CODIGO: '',
+        DESTINO: '',
+        VALOR: '',
+        CANTIDAD: '',
+        TOTAL: subtotal
+      });
     };
 
     addRows("NORMAL", agruparGuias(reporteParaExportar.normales));
     addRows("ADICIONAL", agruparGuias(reporteParaExportar.adicionales));
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Prefactura");
+    XLSX.writeFile(workbook, fileName);
   };
 
   const handleLiquidar = async () => {
@@ -100,7 +111,7 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
       alert("Error al liquidar: " + res.error);
     } else {
       alert("Liquidación generada con éxito. Descargando prefactura...");
-      exportarAExcel(reporte, `Prefactura_${transportistaId}_${fechaInicio}_${fechaFin}.csv`);
+      exportarAExcel(reporte, `Prefactura_${transportistaId}_${fechaInicio}_${fechaFin}.xlsx`);
       setReporte(null); // Limpiamos la pantalla
     }
     
@@ -143,9 +154,9 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
 
         return (
           <div className={styles.reportContainer}>
-            <div className={styles.reportHeader}>
-              <h2>Resultados de Prefactura</h2>
-              <div style={{ display: 'flex', gap: '10px' }}>
+            <div className={styles.reportHeader} style={{ flexWrap: 'wrap', gap: '10px' }}>
+              <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Resultados de Prefactura</h2>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <button className="btn btn-secondary" onClick={() => exportarAExcel()}>Exportar a Excel</button>
                 {reporte.guiasOriginales.length > 0 && (
                   <button 
@@ -179,70 +190,74 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
 
           <div className={styles.tabs}>
             <h3>Prefactura Principal (Normales)</h3>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Destino</th>
-                  <th>Valor</th>
-                  <th>Cantidad</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {agruparGuias(reporte.normales).map((row: any, i: number) => (
-                  <tr key={i}>
-                    <td>{row.codigo}</td>
-                    <td>{row.descripcion}</td>
-                    <td>${row.valorUnitario.toFixed(2)}</td>
-                    <td>{row.cantidad}</td>
-                    <td><strong>${row.total.toFixed(2)}</strong></td>
-                  </tr>
-                ))}
-                {reporte.normales.length === 0 ? (
-                  <tr><td colSpan={5} style={{textAlign: 'center'}}>No hay guías normales en este periodo.</td></tr>
-                ) : (
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <table className={styles.table}>
+                <thead>
                   <tr>
-                    <td colSpan={4} style={{ textAlign: 'right', fontWeight: 600 }}>Total de prefactura:</td>
-                    <td><strong>${reporte.normales.reduce((acc: number, g: any) => acc + g.valor_base_cobrado + g.adicionales.reduce((s: number, a: any) => s + a.valor, 0), 0).toFixed(2)}</strong></td>
+                    <th>Código</th>
+                    <th>Destino</th>
+                    <th>Valor</th>
+                    <th>Cantidad</th>
+                    <th>Total</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {agruparGuias(reporte.normales).map((row: any, i: number) => (
+                    <tr key={i}>
+                      <td>{row.codigo}</td>
+                      <td>{row.descripcion}</td>
+                      <td>${row.valorUnitario.toFixed(2)}</td>
+                      <td>{row.cantidad}</td>
+                      <td><strong>${row.total.toFixed(2)}</strong></td>
+                    </tr>
+                  ))}
+                  {reporte.normales.length === 0 ? (
+                    <tr><td colSpan={5} style={{textAlign: 'center'}}>No hay guías normales en este periodo.</td></tr>
+                  ) : (
+                    <tr>
+                      <td colSpan={4} style={{ textAlign: 'right', fontWeight: 600 }}>Total de prefactura:</td>
+                      <td><strong>${reporte.normales.reduce((acc: number, g: any) => acc + g.valor_base_cobrado + g.adicionales.reduce((s: number, a: any) => s + a.valor, 0), 0).toFixed(2)}</strong></td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className={styles.tabs} style={{ marginTop: '40px' }}>
             <h3 style={{ color: '#f87171' }}>Prefactura Adicional (POFASA / AGROPESA)</h3>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Destino</th>
-                  <th>Valor</th>
-                  <th>Cantidad</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {agruparGuias(reporte.adicionales).map((row: any, i: number) => (
-                  <tr key={i}>
-                    <td>{row.codigo}</td>
-                    <td>{row.descripcion}</td>
-                    <td>${row.valorUnitario.toFixed(2)}</td>
-                    <td>{row.cantidad}</td>
-                    <td><strong>${row.total.toFixed(2)}</strong></td>
-                  </tr>
-                ))}
-                {reporte.adicionales.length === 0 ? (
-                  <tr><td colSpan={5} style={{textAlign: 'center'}}>No hay guías adicionales en este periodo.</td></tr>
-                ) : (
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <table className={styles.table}>
+                <thead>
                   <tr>
-                    <td colSpan={4} style={{ textAlign: 'right', fontWeight: 600 }}>Total de prefactura:</td>
-                    <td><strong>${reporte.adicionales.reduce((acc: number, g: any) => acc + g.valor_base_cobrado + g.adicionales.reduce((s: number, a: any) => s + a.valor, 0), 0).toFixed(2)}</strong></td>
+                    <th>Código</th>
+                    <th>Destino</th>
+                    <th>Valor</th>
+                    <th>Cantidad</th>
+                    <th>Total</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {agruparGuias(reporte.adicionales).map((row: any, i: number) => (
+                    <tr key={i}>
+                      <td>{row.codigo}</td>
+                      <td>{row.descripcion}</td>
+                      <td>${row.valorUnitario.toFixed(2)}</td>
+                      <td>{row.cantidad}</td>
+                      <td><strong>${row.total.toFixed(2)}</strong></td>
+                    </tr>
+                  ))}
+                  {reporte.adicionales.length === 0 ? (
+                    <tr><td colSpan={5} style={{textAlign: 'center'}}>No hay guías adicionales en este periodo.</td></tr>
+                  ) : (
+                    <tr>
+                      <td colSpan={4} style={{ textAlign: 'right', fontWeight: 600 }}>Total de prefactura:</td>
+                      <td><strong>${reporte.adicionales.reduce((acc: number, g: any) => acc + g.valor_base_cobrado + g.adicionales.reduce((s: number, a: any) => s + a.valor, 0), 0).toFixed(2)}</strong></td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           </div>

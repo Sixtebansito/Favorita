@@ -106,10 +106,12 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
           <div key={cierre.id} className="card" style={{ overflow: 'hidden' }}>
             <div 
               style={{ 
-                padding: '2rem', 
+                padding: '1.25rem', 
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '1rem',
                 cursor: 'pointer',
                 backgroundColor: expandedId === cierre.id ? 'var(--muted)' : 'transparent',
                 transition: 'background-color 0.2s'
@@ -117,11 +119,11 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
               onClick={() => toggleExpand(cierre.id)}
             >
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>
                   {cierre.transportista.name}
                 </h3>
-                <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                  Fecha de Cierre: {new Date(cierre.createdAt).toLocaleDateString('es-ES')} | Guías: {cierre.guias.length}
+                <p style={{ color: 'var(--muted-foreground)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                  Cierre: {new Date(cierre.createdAt).toLocaleDateString('es-ES')} | Guías: {cierre.guias.length}
                 </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
