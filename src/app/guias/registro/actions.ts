@@ -159,26 +159,26 @@ export async function getGuiasDeLaSemana() {
   return guias;
 }
 
-export async function cerrarSemanaGlobal() {
+export async function cerrarSemanaGlobal(transportistaIdFiltro?: string) {
   try {
     const session = await getUserSession();
     if (!session) return { error: 'No autorizado' };
     const isAdmin = session.role === 'ADMIN';
 
+    const cabezalConditions: any = {};
+    if (transportistaIdFiltro) {
+      cabezalConditions.transportistaId = transportistaIdFiltro;
+    }
+    if (!isAdmin) {
+      cabezalConditions.transportista = {
+        users: { some: { id: session.id } }
+      };
+    }
+
     const guiasActivas = await prisma.guia.findMany({
       where: { 
         estado: 'ACTIVA',
-        ...(isAdmin ? {} : {
-          cabezal: {
-            transportista: {
-              users: {
-                some: {
-                  id: session.id
-                }
-              }
-            }
-          }
-        })
+        ...(Object.keys(cabezalConditions).length > 0 ? { cabezal: cabezalConditions } : {})
       },
       include: {
         cabezal: true,

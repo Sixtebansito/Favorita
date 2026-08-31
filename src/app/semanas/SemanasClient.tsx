@@ -16,6 +16,8 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  const [filtroTransportista, setFiltroTransportista] = useState('');
+
   if (cierres.length === 0) {
     return (
       <div className="card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted-foreground)' }}>
@@ -23,6 +25,13 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
       </div>
     );
   }
+
+  const transportistasUnicos = Array.from(new Set(cierres.map(c => c.transportistaId))).map(
+    id => cierres.find(c => c.transportistaId === id)!.transportista
+  );
+
+  const cierresFiltrados = filtroTransportista ? cierres.filter(c => c.transportistaId === filtroTransportista) : cierres;
+
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -70,19 +79,35 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
     }
   };
 
-  const granTotalSemanas = cierres.reduce((acc, c) => acc + c.total, 0);
+  const granTotalSemanas = cierresFiltrados.reduce((acc, c) => acc + c.total, 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <div style={{ backgroundColor: 'var(--primary)', color: 'white', padding: '1.5rem', borderRadius: 'var(--radius)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Total Histórico de Liquidaciones</h3>
-          <p style={{ margin: 0, opacity: 0.8, fontSize: '0.875rem', marginTop: '0.25rem' }}>Suma de todas las semanas cerradas mostradas</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end', backgroundColor: 'var(--card)', padding: '1.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+        <div style={{ flex: 1, minWidth: '250px' }}>
+          <label style={{ fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', display: 'block' }}>Filtrar por Transportista</label>
+          <select 
+            className="form-select" 
+            value={filtroTransportista} 
+            onChange={(e) => setFiltroTransportista(e.target.value)}
+          >
+            <option value="">Todos los transportistas</option>
+            {transportistasUnicos.map(t => (
+              <option key={t.id} value={t.id}>{t.name} ({t.ruc})</option>
+            ))}
+          </select>
         </div>
-        <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 700 }}>${granTotalSemanas.toFixed(2)}</h2>
       </div>
 
-      {cierres.map((cierre) => {
+      <div style={{ backgroundColor: 'var(--primary)', color: 'white', padding: '1rem', borderRadius: 'var(--radius)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Total Histórico de Liquidaciones</h3>
+          <p style={{ margin: 0, opacity: 0.8, fontSize: '0.8rem', marginTop: '0.25rem' }}>Suma de las semanas mostradas</p>
+        </div>
+        <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>${granTotalSemanas.toFixed(2)}</h2>
+      </div>
+
+      {cierresFiltrados.map((cierre) => {
         // Agrupar guías por cabezal
         const guiasPorCabezal: Record<string, { cabezal: any, guias: any[], subtotal: number, totalTickets: number }> = {};
         
@@ -136,7 +161,7 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
                 <div style={{ width: '1px', height: '40px', backgroundColor: 'var(--border)' }}></div>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Semana</span>
-                  <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--foreground)' }}>
                     ${cierre.total.toFixed(2)}
                   </p>
                 </div>
@@ -147,12 +172,12 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
             </div>
 
             {expandedId === cierre.id && (
-              <div style={{ borderTop: '1px solid var(--border)', padding: '2rem', backgroundColor: 'var(--background)' }}>
-                {cabezalesArray.map((grupo) => (
-                  <div key={grupo.cabezal.id} style={{ marginBottom: '2.5rem' }}>
-                    <h4 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--primary)', display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ borderTop: '1px solid var(--border)', padding: '1rem', backgroundColor: 'var(--background)' }}>
+                {cabezalesArray.map((grupo: any) => (
+                  <div key={grupo.cabezal.id} style={{ marginBottom: '2rem' }}>
+                    <h4 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '1rem', color: 'var(--primary)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
                       <span>Cabezal: {grupo.cabezal.placa}</span>
-                      <span>Subtotal: ${grupo.subtotal.toFixed(2)} <span style={{ opacity: 0.7, fontSize: '0.9rem', marginLeft: '0.5rem' }}>| Tickets: ${grupo.totalTickets.toFixed(2)}</span></span>
+                      <span>Subtotal: ${grupo.subtotal.toFixed(2)} <span style={{ opacity: 0.7, fontSize: '0.8rem', marginLeft: '0.5rem' }}>| Tickets: ${grupo.totalTickets.toFixed(2)}</span></span>
                     </h4>
                     
                     <div className="data-table-container">

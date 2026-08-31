@@ -218,11 +218,11 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
   };
 
   const handleCerrarSemana = async () => {
-    if (guiasSemana.length === 0) return;
-    const confirm = window.confirm('¿Estás seguro de guardar los valores de la semana? Esto cuadrará las guías activas agrupándolas por transportista.');
+    if (guiasSemanaVisibles.length === 0) return;
+    const confirm = window.confirm('¿Estás seguro de guardar los valores de la semana? Esto cuadrará las guías activas del transportista seleccionado.');
     if (!confirm) return;
 
-    const res = await cerrarSemanaGlobal();
+    const res = await cerrarSemanaGlobal(transportistaId);
     if (res.error) {
       alert(res.error);
     } else {
