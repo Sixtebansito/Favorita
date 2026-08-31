@@ -17,7 +17,7 @@ export default function Sidebar({ user }: { user: any }) {
     { href: '/semanas', label: 'Semanas (Cierres)', icon: FileSpreadsheet, show: true },
     { href: '/prefacturas', label: 'Prefacturas', icon: FileSpreadsheet, show: true },
     { href: '/transportistas', label: 'Transportistas', icon: Truck, show: true },
-    { href: '/tarifarios', label: 'Tarifarios', icon: FileSpreadsheet, show: isAdmin },
+    { href: '/tarifario', label: 'Tarifarios', icon: FileSpreadsheet, show: isAdmin },
     { href: '/usuarios', label: 'Usuarios', icon: Users, show: isAdmin },
 
   ];

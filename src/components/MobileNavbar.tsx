@@ -25,7 +25,7 @@ export default function MobileNavbar({ user }: { user: any }) {
 
   const moreNavItems = [
     { href: '/transportistas', label: 'Transportistas', icon: Truck, show: true },
-    { href: '/tarifarios', label: 'Tarifarios', icon: FileSpreadsheet, show: isAdmin },
+    { href: '/tarifario', label: 'Tarifarios', icon: FileSpreadsheet, show: isAdmin },
     { href: '/usuarios', label: 'Usuarios', icon: Users, show: isAdmin },
 
   ];

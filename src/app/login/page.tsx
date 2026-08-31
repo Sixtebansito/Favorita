@@ -68,7 +68,29 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {error && (
+        {error && error.includes('Inactivo') && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }}>
+            <div style={{ backgroundColor: 'var(--card)', padding: '2rem', borderRadius: '1rem', maxWidth: '400px', width: '100%', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+              <div style={{ color: '#ef4444', marginBottom: '1rem' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              </div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--foreground)' }}>Acceso Denegado</h2>
+              <p style={{ color: 'var(--muted-foreground)', marginBottom: '1.5rem', fontSize: '1rem', lineHeight: 1.5 }}>
+                {error}
+              </p>
+              <button 
+                type="button"
+                onClick={() => setError(null)} 
+                className="btn btn-primary" 
+                style={{ width: '100%', padding: '0.75rem' }}
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        )}
+
+        {error && !error.includes('Inactivo') && (
           <div style={{ 
             width: '100%', 
             padding: '0.75rem', 
