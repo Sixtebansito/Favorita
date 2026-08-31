@@ -438,7 +438,10 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                   value={nuevoValor}
                   onChange={e => setNuevoValor(e.target.value)}
                 />
-                <button type="button" onClick={handleAddAdicional} className="btn btn-secondary" style={{ padding: '0.5rem' }}>Añadir</button>
+                <button type="button" onClick={handleAddAdicional} className="btn btn-secondary" style={{ padding: '0.5rem 1rem' }}>
+                  <span className="desktop-only">Añadir</span>
+                  <span className="mobile-only">+</span>
+                </button>
               </div>
               
               {adicionales.length > 0 && (
@@ -654,18 +657,18 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                 </div>
               ))}
 
-              <div className="card" style={{ padding: '1.5rem', marginTop: '1rem', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', display: 'flex', justifyContent: 'space-between' }}>
-                <h3 style={{ margin: 0, fontWeight: 700 }}>TOTAL GLOBAL (SELECCIÓN)</h3>
-                <div style={{ display: 'flex', gap: '2rem', textAlign: 'right' }}>
+              <div className="card" style={{ padding: '1rem', marginTop: '1rem', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ margin: 0, fontWeight: 700, fontSize: '1.1rem' }}>TOTAL GLOBAL</div>
+                <div style={{ display: 'flex', gap: '1.5rem', textAlign: 'right' }}>
                   <div>
-                    <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>TOTAL GUÍAS</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+                    <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>GUÍAS</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>
                       ${guiasSemanaVisibles.reduce((sum, g) => sum + g.valor_base_cobrado + g.adicionales.reduce((a: any, b: any) => a + b.valor, 0), 0).toFixed(2)}
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>TOTAL TICKETS</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+                    <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>TICKETS</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>
                       ${guiasSemanaVisibles.reduce((sum, g) => sum + (g.valor_ticket || 0), 0).toFixed(2)}
                     </div>
                   </div>
