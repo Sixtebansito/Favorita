@@ -274,6 +274,10 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
     setSavingActiva(false);
   };
 
+  const guiasSemanaVisibles = transportistaId 
+    ? guiasSemana.filter(g => g.cabezal.transportistaId === transportistaId)
+    : guiasSemana;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div className="card" style={{ padding: '2rem' }}>
@@ -476,11 +480,11 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           {cargandoGuias ? (
             <div className="card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted-foreground)' }}>Cargando guías...</div>
-          ) : guiasSemana.length === 0 ? (
-            <div className="card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted-foreground)' }}>No hay guías activas registradas esta semana.</div>
+          ) : guiasSemanaVisibles.length === 0 ? (
+            <div className="card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted-foreground)' }}>No hay guías activas registradas para la selección actual.</div>
           ) : (
             <>
-              {Object.entries(guiasSemana.reduce((acc, guia) => {
+              {Object.entries(guiasSemanaVisibles.reduce((acc, guia) => {
                 const placa = guia.cabezal.placa;
                 if (!acc[placa]) acc[placa] = [];
                 acc[placa].push(guia);
@@ -651,18 +655,18 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
               ))}
 
               <div className="card" style={{ padding: '1.5rem', marginTop: '1rem', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', display: 'flex', justifyContent: 'space-between' }}>
-                <h3 style={{ margin: 0, fontWeight: 700 }}>TOTAL GLOBAL DE LA SEMANA (PENDIENTE)</h3>
+                <h3 style={{ margin: 0, fontWeight: 700 }}>TOTAL GLOBAL (SELECCIÓN)</h3>
                 <div style={{ display: 'flex', gap: '2rem', textAlign: 'right' }}>
                   <div>
                     <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>TOTAL GUÍAS</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>
-                      ${guiasSemana.reduce((sum, g) => sum + g.valor_base_cobrado + g.adicionales.reduce((a: any, b: any) => a + b.valor, 0), 0).toFixed(2)}
+                      ${guiasSemanaVisibles.reduce((sum, g) => sum + g.valor_base_cobrado + g.adicionales.reduce((a: any, b: any) => a + b.valor, 0), 0).toFixed(2)}
                     </div>
                   </div>
                   <div>
                     <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>TOTAL TICKETS</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>
-                      ${guiasSemana.reduce((sum, g) => sum + (g.valor_ticket || 0), 0).toFixed(2)}
+                      ${guiasSemanaVisibles.reduce((sum, g) => sum + (g.valor_ticket || 0), 0).toFixed(2)}
                     </div>
                   </div>
                 </div>
