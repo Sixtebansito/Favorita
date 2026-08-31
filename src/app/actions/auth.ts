@@ -23,6 +23,10 @@ export async function login(formData: FormData) {
     return { error: 'Credenciales inválidas' };
   }
 
+  if (user.isActive === false) {
+    return { error: 'Error al ingresar: Usuario Inactivo por falta de pago, Por favor comunicarse al: 0983958430' };
+  }
+
   // Crear la sesión en cookie
   const sessionData = JSON.stringify({
     id: user.id,

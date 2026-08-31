@@ -59,3 +59,16 @@ export async function cambiarPassword(id: string, nuevaPassword: string) {
     return { error: 'No se pudo actualizar la contraseña.' };
   }
 }
+
+export async function toggleStatusUsuario(id: string, isActive: boolean) {
+  try {
+    await prisma.user.update({
+      where: { id },
+      data: { isActive }
+    });
+    revalidatePath('/usuarios');
+    return { success: true };
+  } catch (error: any) {
+    return { error: 'No se pudo actualizar el estado del usuario.' };
+  }
+}

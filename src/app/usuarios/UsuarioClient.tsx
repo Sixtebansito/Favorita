@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { crearUsuario, eliminarUsuario, cambiarPassword } from './actions';
+import { crearUsuario, eliminarUsuario, cambiarPassword, toggleStatusUsuario } from './actions';
 import styles from './usuario.module.css';
 
 export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
@@ -42,6 +42,15 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
       } else {
         alert('¡Contraseña actualizada con éxito!');
       }
+    }
+  };
+
+  const handleToggleStatus = async (id: string, currentState: boolean) => {
+    const newState = !currentState;
+    const action = newState ? 'habilitar' : 'deshabilitar';
+    if (confirm(`¿Estás seguro de ${action} este usuario?`)) {
+      const res = await toggleStatusUsuario(id, newState);
+      if (res.error) alert(res.error);
     }
   };
 
@@ -88,6 +97,7 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
               <th>Nombre</th>
               <th>Email</th>
               <th>Rol</th>
+              <th>Estado</th>
               <th>Fecha de Creación</th>
               <th>Acciones</th>
             </tr>
@@ -102,9 +112,17 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
                     {u.role}
                   </span>
                 </td>
+                <td>
+                  <span style={{ color: u.isActive !== false ? 'green' : 'red', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                    {u.isActive !== false ? 'Activo' : 'Suspendido'}
+                  </span>
+                </td>
                 <td>{new Date(u.createdAt).toLocaleDateString('es-ES')}</td>
                 <td>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button onClick={() => handleToggleStatus(u.id, u.isActive !== false)} className={u.isActive !== false ? "btn btn-danger" : "btn btn-primary"} style={{ padding: '0 12px', fontSize: '0.75rem', height: '32px' }}>
+                      {u.isActive !== false ? 'Deshabilitar' : 'Habilitar'}
+                    </button>
                     <button onClick={() => handleCambiarPassword(u.id)} className="btn btn-secondary" style={{ padding: '0 12px', fontSize: '0.75rem', height: '32px' }}>
                       Cambiar Clave
                     </button>

@@ -470,3 +470,13 @@ a {
   background-color: #fee2e2;
   color: #991b1b;
 }
+
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: inline-block !important; }
+}
+@media (min-width: 769px) {
+  .desktop-only { display: inline-block !important; }
+  .mobile-only { display: none !important; }
+}
+

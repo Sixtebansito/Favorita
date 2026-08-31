@@ -356,8 +356,9 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                   }
                 }}
               />
-              <button type="button" onClick={handleAddCodigo} className="btn btn-secondary">
-                Añadir Código
+              <button type="button" onClick={handleAddCodigo} className="btn btn-secondary" style={{ padding: '0.5rem 1rem' }}>
+                <span className="desktop-only">Añadir Código</span>
+                <span className="mobile-only">+</span>
               </button>
             </div>
             
