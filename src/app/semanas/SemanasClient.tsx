@@ -121,7 +121,7 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
                   {cierre.transportista.name}
                 </h3>
                 <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                  Fecha de Cierre: {new Date(cierre.createdAt).toLocaleDateString()} | Guías: {cierre.guias.length}
+                  Fecha de Cierre: {new Date(cierre.createdAt).toLocaleDateString('es-ES')} | Guías: {cierre.guias.length}
                 </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
@@ -158,8 +158,8 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
                         <thead>
                           <tr>
                             <th>Fecha Guía</th>
+                            <th>Código(s)</th>
                             <th>Destino</th>
-                            <th>Códigos Evaluados</th>
                             <th>Valor Base</th>
                             <th>Tickets</th>
                             <th>Adicionales</th>
@@ -175,9 +175,9 @@ export default function SemanasClient({ cierres }: { cierres: any[] }) {
                             
                             return (
                               <tr key={guia.id} style={isEditing ? { backgroundColor: 'var(--accent)' } : {}}>
-                                <td>{new Date(guia.fecha_guia).toLocaleDateString()}</td>
-                                <td>{guia.cliente_destino}</td>
+                                <td>{new Date(guia.fecha_guia).toLocaleDateString('es-ES')}</td>
                                 <td>{guia.codigos_evaluados}</td>
+                                <td>{guia.guiaPrecio?.descripcion || guia.cliente_destino}</td>
                                 
                                 {/* Valor Base */}
                                 <td>

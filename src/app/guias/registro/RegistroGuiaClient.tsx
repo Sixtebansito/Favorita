@@ -511,7 +511,8 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                       <thead>
                         <tr>
                           <th>Fecha</th>
-                          <th>Código Evaluado</th>
+                          <th>Código(s)</th>
+                          <th>Destino</th>
                           <th>Valor Base</th>
                           <th>Adicionales</th>
                           <th>Total</th>
@@ -526,10 +527,11 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                           const granTotal = guia.valor_base_cobrado + totalAdicional;
                           return (
                             <tr key={guia.id} style={isEditing ? { backgroundColor: 'var(--accent)' } : {}}>
-                              <td>{new Date(guia.fecha_guia).toLocaleDateString()}</td>
+                              <td>{new Date(guia.fecha_guia).toLocaleDateString('es-ES')}</td>
                               <td>
                                 <span className="badge badge-secondary">{guia.codigos_evaluados}</span>
                               </td>
+                              <td>{guia.guiaPrecio?.descripcion || guia.cliente_destino}</td>
                               <td>
                                 {isEditing ? (
                                   <input 

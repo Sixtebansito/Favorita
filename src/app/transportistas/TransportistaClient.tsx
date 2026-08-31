@@ -244,10 +244,10 @@ export default function TransportistaClient({
                       <li key={liq.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#f8fafc', borderRadius: '5px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                            {new Date(liq.fecha_inicio).toLocaleDateString()} - {new Date(liq.fecha_fin).toLocaleDateString()}
+                            {new Date(liq.fecha_inicio).toLocaleDateString('es-ES')} - {new Date(liq.fecha_fin).toLocaleDateString('es-ES')}
                           </span>
                           <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                            Generada: {new Date(liq.createdAt).toLocaleDateString()}
+                            Generada: {new Date(liq.createdAt).toLocaleDateString('es-ES')}
                           </span>
                         </div>
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>

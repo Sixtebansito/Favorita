@@ -102,7 +102,7 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
                     {u.role}
                   </span>
                 </td>
-                <td>{new Date(u.createdAt).toLocaleDateString()}</td>
+                <td>{new Date(u.createdAt).toLocaleDateString('es-ES')}</td>
                 <td>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <button onClick={() => handleCambiarPassword(u.id)} className="btn btn-secondary" style={{ padding: '0 12px', fontSize: '0.75rem', height: '32px' }}>

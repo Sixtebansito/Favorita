@@ -27,7 +27,8 @@ export default async function SemanasPage() {
         },
         include: {
           cabezal: true,
-          adicionales: true
+          adicionales: true,
+          guiaPrecio: true
         }
       }
     },
