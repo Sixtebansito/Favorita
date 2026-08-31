@@ -170,20 +170,20 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
               </div>
             </div>
 
-            <div style={{ backgroundColor: 'var(--primary)', color: 'white', padding: '1.5rem', borderRadius: 'var(--radius)', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
+            <div style={{ backgroundColor: 'var(--primary)', color: 'white', padding: '1rem', borderRadius: 'var(--radius)', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Total a Pagar (Gran Total Guías)</h3>
-                <p style={{ margin: 0, opacity: 0.8, fontSize: '0.875rem', marginTop: '0.25rem' }}>Suma de facturas normales y adicionales</p>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Total a Pagar (Gran Total)</h3>
+                <p style={{ margin: 0, opacity: 0.8, fontSize: '0.8rem', marginTop: '0.25rem' }}>Suma de facturas normales y adicionales</p>
               </div>
-              <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.875rem', opacity: 0.8, fontWeight: 600 }}>TICKETS</div>
-                  <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 700 }}>${totalTickets.toFixed(2)}</h2>
+                  <div style={{ fontSize: '0.75rem', opacity: 0.8, fontWeight: 600 }}>TICKETS</div>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>${totalTickets.toFixed(2)}</h2>
                 </div>
-                <div style={{ width: '1px', height: '40px', backgroundColor: 'rgba(255,255,255,0.3)' }}></div>
+                <div style={{ width: '1px', height: '30px', backgroundColor: 'rgba(255,255,255,0.3)' }}></div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.875rem', opacity: 0.8, fontWeight: 600 }}>GUÍAS</div>
-                  <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 700 }}>${totalGeneral.toFixed(2)}</h2>
+                  <div style={{ fontSize: '0.75rem', opacity: 0.8, fontWeight: 600 }}>GUÍAS</div>
+                  <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>${totalGeneral.toFixed(2)}</h2>
                 </div>
               </div>
             </div>
