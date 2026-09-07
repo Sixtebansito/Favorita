@@ -7,20 +7,23 @@ import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 
 const SESSION_COOKIE_NAME = 'auth_session';
-const secretKey = process.env.SESSION_SECRET || 'default_secret_key_change_in_production';
-const key = new TextEncoder().encode(secretKey);
+
+function getSecretKey() {
+  const secretKey = process.env.SESSION_SECRET || 'default_secret_key_change_in_production';
+  return new TextEncoder().encode(secretKey);
+}
 
 export async function encrypt(payload: any) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(key);
+    .sign(getSecretKey());
 }
 
 export async function decrypt(input: string): Promise<any> {
   try {
-    const { payload } = await jwtVerify(input, key, {
+    const { payload } = await jwtVerify(input, getSecretKey(), {
       algorithms: ['HS256'],
     });
     return payload;

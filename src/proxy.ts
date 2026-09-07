@@ -3,8 +3,11 @@ import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
 const SESSION_COOKIE_NAME = 'auth_session';
-const secretKey = process.env.SESSION_SECRET || 'default_secret_key_change_in_production';
-const key = new TextEncoder().encode(secretKey);
+
+function getSecretKey() {
+  const secretKey = process.env.SESSION_SECRET || 'default_secret_key_change_in_production';
+  return new TextEncoder().encode(secretKey);
+}
 
 // Define las rutas que requieren estar logeado
 const protectedRoutes = ['/dashboard', '/guias', '/semanas', '/prefacturas', '/tarifario', '/admin'];
@@ -21,7 +24,7 @@ export async function proxy(request: NextRequest) {
 
   if (cookie) {
     try {
-      const { payload } = await jwtVerify(cookie, key, {
+      const { payload } = await jwtVerify(cookie, getSecretKey(), {
         algorithms: ['HS256'],
       });
       session = payload;
