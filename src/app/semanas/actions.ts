@@ -2,8 +2,12 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { getUserSession } from '../actions/auth';
 
 export async function actualizarValorGuia(guiaId: string, nuevoValorBase: number, nuevoValorTicket: number, nuevosAdicionales: { id: string; concepto?: string; valor: number }[], cierreSemanaId: string) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   try {
     // 1. Actualizar el valor base de la guía y tickets
     await prisma.guia.update({
@@ -63,6 +67,9 @@ export async function actualizarValorGuia(guiaId: string, nuevoValorBase: number
 }
 
 export async function eliminarGuiaDeSemana(guiaId: string, cierreSemanaId: string) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   try {
     // 1. Revertir la guía a ACTIVA y desligarla del cierre
     await prisma.guia.update({

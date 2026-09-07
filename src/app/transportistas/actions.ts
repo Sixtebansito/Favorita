@@ -5,13 +5,15 @@ import { revalidatePath } from 'next/cache';
 import { getUserSession } from '../actions/auth';
 
 export async function crearTransportista(data: { name: string; ruc: string }) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   try {
     const existing = await prisma.transportista.findUnique({
       where: { ruc: data.ruc }
     });
     if (existing) return { error: 'Esta compañía (RUC) ya está registrada en el sistema. Solicita al administrador que te la asigne a tu usuario.' };
 
-    const session = await getUserSession();
     const userConnect = session ? {
       users: { connect: { id: session.id } }
     } : {};
@@ -32,6 +34,9 @@ export async function crearTransportista(data: { name: string; ruc: string }) {
 }
 
 export async function crearCabezal(data: { placa: string; transportistaId: string }) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   try {
     const existing = await prisma.cabezal.findUnique({
       where: { placa: data.placa }
@@ -53,6 +58,9 @@ export async function crearCabezal(data: { placa: string; transportistaId: strin
 }
 
 export async function eliminarCabezal(id: string) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   try {
     await prisma.cabezal.delete({
       where: { id }
@@ -65,6 +73,9 @@ export async function eliminarCabezal(id: string) {
 }
 
 export async function getLiquidacionDetalle(liquidacionId: string) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   const liquidacion = await prisma.liquidacion.findUnique({
     where: { id: liquidacionId },
     include: {
@@ -98,6 +109,9 @@ export async function getLiquidacionDetalle(liquidacionId: string) {
 }
 
 export async function asignarUsuarioATransportista(transportistaId: string, userId: string) {
+  const session = await getUserSession();
+  if (!session || session.role !== 'ADMIN') return { error: 'No autorizado' };
+
   try {
     await prisma.transportista.update({
       where: { id: transportistaId },

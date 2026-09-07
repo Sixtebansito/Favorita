@@ -1,8 +1,12 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { getUserSession } from '../actions/auth';
 
 export async function generarPrefactura(transportistaId: string, fechaInicio: string, fechaFin: string) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   const start = new Date(fechaInicio);
   const end = new Date(fechaFin);
   // Asegurar que el end cubra todo el dia
@@ -40,6 +44,9 @@ export async function generarPrefactura(transportistaId: string, fechaInicio: st
 }
 
 export async function liquidarValores(transportistaId: string, fechaInicio: string, fechaFin: string, totalPagado: number, totalTickets: number, guiasIds: string[]) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   try {
     const start = new Date(fechaInicio);
     const end = new Date(fechaFin);

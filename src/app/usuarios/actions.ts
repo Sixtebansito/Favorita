@@ -3,8 +3,12 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcryptjs';
+import { getUserSession } from '../actions/auth';
 
 export async function crearUsuario(data: { name: string; email: string; password: string; role: string }) {
+  const session = await getUserSession();
+  if (!session || session.role !== 'ADMIN') return { error: 'No autorizado' };
+
   try {
     const existing = await prisma.user.findUnique({
       where: { email: data.email }
@@ -30,6 +34,9 @@ export async function crearUsuario(data: { name: string; email: string; password
 }
 
 export async function eliminarUsuario(id: string) {
+  const session = await getUserSession();
+  if (!session || session.role !== 'ADMIN') return { error: 'No autorizado' };
+
   try {
     await prisma.user.delete({
       where: { id }
@@ -42,6 +49,9 @@ export async function eliminarUsuario(id: string) {
 }
 
 export async function cambiarPassword(id: string, nuevaPassword: string) {
+  const session = await getUserSession();
+  if (!session || session.role !== 'ADMIN') return { error: 'No autorizado' };
+
   try {
     if (!nuevaPassword || nuevaPassword.trim().length === 0) {
       return { error: 'La contraseña no puede estar vacía.' };
@@ -61,6 +71,9 @@ export async function cambiarPassword(id: string, nuevaPassword: string) {
 }
 
 export async function toggleStatusUsuario(id: string, isActive: boolean) {
+  const session = await getUserSession();
+  if (!session || session.role !== 'ADMIN') return { error: 'No autorizado' };
+
   try {
     await prisma.user.update({
       where: { id },

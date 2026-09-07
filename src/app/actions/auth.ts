@@ -4,8 +4,30 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
+import { SignJWT, jwtVerify } from 'jose';
 
 const SESSION_COOKIE_NAME = 'auth_session';
+const secretKey = process.env.SESSION_SECRET || 'default_secret_key_change_in_production';
+const key = new TextEncoder().encode(secretKey);
+
+export async function encrypt(payload: any) {
+  return await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(key);
+}
+
+export async function decrypt(input: string): Promise<any> {
+  try {
+    const { payload } = await jwtVerify(input, key, {
+      algorithms: ['HS256'],
+    });
+    return payload;
+  } catch (error) {
+    return null;
+  }
+}
 
 export async function login(formData: FormData) {
   const email = formData.get('email') as string;
@@ -28,7 +50,7 @@ export async function login(formData: FormData) {
   }
 
   // Crear la sesión en cookie
-  const sessionData = JSON.stringify({
+  const sessionData = await encrypt({
     id: user.id,
     role: user.role,
     name: user.name
@@ -57,7 +79,8 @@ export async function getUserSession() {
   if (!session?.value) return null;
 
   try {
-    const data = JSON.parse(session.value);
+    const data = await decrypt(session.value);
+    if (!data) return null;
     return data as { id: string; role: string; name: string };
   } catch (error) {
     return null;

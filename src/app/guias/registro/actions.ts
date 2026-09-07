@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma';
 import { getUserSession } from '../../actions/auth';
 
 export async function lookupPrecio(codigo: string, fecha: string) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   // Encuentra el tarifario más reciente vigente antes o en la fecha de la guía
   const fechaDate = new Date(fecha);
   
@@ -39,6 +42,9 @@ export async function lookupPrecio(codigo: string, fecha: string) {
 }
 
 export async function lookupPreciosMultiple(codigos: string[], fecha: string) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   const fechaDate = new Date(fecha);
   const tarifario = await prisma.tarifario.findFirst({
     where: { fecha_vigencia: { lte: fechaDate }, activo: true },
@@ -77,6 +83,9 @@ export async function lookupPreciosMultiple(codigos: string[], fecha: string) {
 }
 
 export async function addPrecioToTarifario(tarifarioId: string, data: {codigo: string, tipo: string, descripcion: string, valor: number}) {
+  const session = await getUserSession();
+  if (!session || session.role !== 'ADMIN') return { error: 'No autorizado' };
+
   try {
     const nuevoPrecio = await prisma.guiaPrecio.create({
       data: {
@@ -94,6 +103,9 @@ export async function addPrecioToTarifario(tarifarioId: string, data: {codigo: s
 }
 
 export async function registrarGuia(data: any) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   const { cabezalId, fecha_guia, cliente_destino, codigos, adicionales, valor_ticket } = data;
   
   const lookup = await lookupPreciosMultiple(codigos, fecha_guia);
@@ -232,6 +244,9 @@ export async function cerrarSemanaGlobal(transportistaIdFiltro?: string) {
 }
 
 export async function eliminarGuiaActiva(guiaId: string) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   try {
     await prisma.guiaAdicional.deleteMany({
       where: { guiaId }
@@ -246,6 +261,9 @@ export async function eliminarGuiaActiva(guiaId: string) {
 }
 
 export async function actualizarValorGuiaActiva(guiaId: string, nuevoValorBase: number, nuevoValorTicket: number, nuevosAdicionales: { id: string; concepto?: string; valor: number }[]) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
   try {
     await prisma.guia.update({
       where: { id: guiaId },
