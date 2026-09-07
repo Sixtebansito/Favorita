@@ -14,6 +14,7 @@ const protectedRoutes = ['/guias', '/semanas', '/prefacturas', '/tarifario', '/u
 const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
 
 export async function proxy(request: NextRequest) {
+  const path = request.nextUrl.pathname;
   const isPublicRoute = publicRoutes.some(route => path.startsWith(route));
   // isProtectedRoute es true si la ruta es exactamente '/' o si empieza por alguna ruta protegida
   const isProtectedRoute = path === '/' || protectedRoutes.some(route => path.startsWith(route));
