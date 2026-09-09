@@ -7,7 +7,6 @@ import styles from './registro.module.css';
 export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) {
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [cabezalId, setCabezalId] = useState('');
-  const [clienteDestino, setClienteDestino] = useState('FAVORITA');
   
   // Array de códigos
   const [codigos, setCodigos] = useState<string[]>([]);
@@ -59,6 +58,7 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
 
   const [guiasSemana, setGuiasSemana] = useState<any[]>([]);
   const [cargandoGuias, setCargandoGuias] = useState(true);
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   // Estados para la edición en línea de la semana activa
   const [editingActivaId, setEditingActivaId] = useState<string | null>(null);
@@ -199,7 +199,6 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
       cabezalId,
       fecha_guia: fecha,
       codigos: codigos,
-      cliente_destino: clienteDestino,
       adicionales,
       valor_ticket: valorTicket
     });
@@ -319,15 +318,6 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                     {c.placa}
                   </option>
                 ))}
-              </select>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>Cliente Destino</label>
-              <select className="form-select" value={clienteDestino} onChange={(e) => setClienteDestino(e.target.value)} required>
-                <option value="FAVORITA">FAVORITA (Guía Normal)</option>
-                <option value="POFASA">POFASA</option>
-                <option value="AGROPESA">AGROPESA</option>
               </select>
             </div>
 
@@ -475,9 +465,17 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>SEMANA: Guías Registradas (Sin Cuadrar)</h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>Guías activas ingresadas esta semana que aún no han sido agrupadas.</p>
           </div>
-          <button onClick={handleCerrarSemana} disabled={guiasSemana.length === 0} className="btn btn-primary">
-            Guardar valores de la semana
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button 
+              onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')} 
+              className="btn btn-secondary"
+            >
+              Ordenar por Valor ({sortOrder === 'desc' ? 'Mayor a Menor' : 'Menor a Mayor'})
+            </button>
+            <button onClick={handleCerrarSemana} disabled={guiasSemana.length === 0} className="btn btn-primary">
+              Guardar valores de la semana
+            </button>
+          </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -492,7 +490,13 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                 if (!acc[placa]) acc[placa] = [];
                 acc[placa].push(guia);
                 return acc;
-              }, {} as Record<string, any[]>)).map(([placa, guiasCabezal]: [string, any]) => (
+              }, {} as Record<string, any[]>)).map(([placa, guiasCabezal]: [string, any]) => {
+                const sortedGuias = [...guiasCabezal].sort((a: any, b: any) => {
+                  const totalA = a.valor_base_cobrado + a.adicionales.reduce((acc: number, ad: any) => acc + ad.valor, 0);
+                  const totalB = b.valor_base_cobrado + b.adicionales.reduce((acc: number, ad: any) => acc + ad.valor, 0);
+                  return sortOrder === 'desc' ? totalB - totalA : totalA - totalB;
+                });
+                return (
                 <div key={placa} className="data-table-container" style={{ overflow: 'hidden' }}>
                   <div style={{ 
                     padding: '1.25rem 1.5rem', 
@@ -529,7 +533,7 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                         </tr>
                       </thead>
                       <tbody>
-                        {guiasCabezal.map((guia: any) => {
+                        {sortedGuias.map((guia: any) => {
                           const isEditing = editingActivaId === guia.id;
                           const totalAdicional = guia.adicionales.reduce((acc: number, a: any) => acc + a.valor, 0);
                           const granTotal = guia.valor_base_cobrado + totalAdicional;
@@ -655,7 +659,8 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
 
               <div className="card" style={{ padding: '1rem', marginTop: '1rem', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <div style={{ margin: 0, fontWeight: 700, fontSize: '1.1rem' }}>TOTAL GLOBAL</div>

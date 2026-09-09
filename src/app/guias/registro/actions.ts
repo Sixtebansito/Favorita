@@ -106,7 +106,7 @@ export async function registrarGuia(data: any) {
   const session = await getUserSession();
   if (!session) return { error: 'No autorizado' };
 
-  const { cabezalId, fecha_guia, cliente_destino, codigos, adicionales, valor_ticket } = data;
+  const { cabezalId, fecha_guia, codigos, adicionales, valor_ticket } = data;
   
   const lookup = await lookupPreciosMultiple(codigos, fecha_guia);
   if (lookup.error) return { error: lookup.error };
@@ -114,11 +114,19 @@ export async function registrarGuia(data: any) {
   const precio = lookup.precio;
   const codigosStr = codigos.join(', ');
 
+  const desc = precio!.descripcion.toUpperCase();
+  let cliente_destino_inferred = "FAVORITA";
+  if (desc.includes("POFASA")) {
+    cliente_destino_inferred = "POFASA";
+  } else if (desc.includes("AGROPESA")) {
+    cliente_destino_inferred = "AGROPESA";
+  }
+
   const nuevaGuia = await prisma.guia.create({
     data: {
       cabezalId,
       fecha_guia: new Date(fecha_guia),
-      cliente_destino,
+      cliente_destino: cliente_destino_inferred,
       guiaPrecioId: precio!.id,
       valor_base_cobrado: precio!.valor,
       valor_ticket: valor_ticket || 0,
