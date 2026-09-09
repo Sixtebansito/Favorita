@@ -38,22 +38,15 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
       const totalAdicionales = g.adicionales.reduce((acc: number, a: any) => acc + a.valor, 0);
       const valorTotal = g.valor_base_cobrado + totalAdicionales;
       
-      const key = `${valorTotal}`;
+      const key = valorTotal >= 100 ? `${valorTotal}` : `${g.guiaPrecio.descripcion}_${valorTotal}`;
       if (!grupos[key]) {
         grupos[key] = {
           codigo: g.guiaPrecio.codigo,
           descripcion: g.guiaPrecio.descripcion,
           valorUnitario: valorTotal,
           cantidad: 0,
-          total: 0,
-          descripcionesUnicas: new Set([g.guiaPrecio.descripcion])
+          total: 0
         };
-      } else {
-        grupos[key].descripcionesUnicas.add(g.guiaPrecio.descripcion);
-        if (grupos[key].descripcionesUnicas.size > 1) {
-          grupos[key].codigo = 'VARIOS';
-          grupos[key].descripcion = 'VARIOS DESTINOS';
-        }
       }
       
       grupos[key].cantidad += 1;
