@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { getUserSession } from '../actions/auth';
 
-export async function generarPrefactura(transportistaId: string, fechaInicio: string, fechaFin: string) {
+export async function generarPrefactura(transportistaId: string, fechaInicio: string, fechaFin: string, incluirActivas: boolean = false) {
   const session = await getUserSession();
   if (!session) return { error: 'No autorizado' };
 
@@ -21,7 +21,9 @@ export async function generarPrefactura(transportistaId: string, fechaInicio: st
       cabezal: {
         transportistaId: transportistaId
       },
-      estado: 'CUADRADA' // Solo guías que ya fueron cerradas semanalmente pero no liquidadas
+      estado: {
+        in: incluirActivas ? ['CUADRADA', 'ACTIVA'] : ['CUADRADA']
+      } // Solo guías que ya fueron cerradas semanalmente, o también activas si se solicita
     },
     include: {
       cabezal: true,

@@ -7,9 +7,17 @@ import * as XLSX from 'xlsx';
 
 export default function PrefacturaClient({ transportistas }: { transportistas: any[] }) {
   const [transportistaId, setTransportistaId] = useState('');
+  
+  // Calcular fecha de hace un mes
+  const dateObj = new Date();
+  dateObj.setMonth(dateObj.getMonth() - 1);
+  const unMesAntes = dateObj.toISOString().split('T')[0];
+  
   const today = new Date().toISOString().split('T')[0];
-  const [fechaInicio, setFechaInicio] = useState(today);
+  const [fechaInicio, setFechaInicio] = useState(unMesAntes);
   const [fechaFin, setFechaFin] = useState(today);
+  const [incluirActivas, setIncluirActivas] = useState(false);
+  
   const [reporte, setReporte] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [liquidando, setLiquidando] = useState(false);
@@ -19,7 +27,7 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
     if (!transportistaId || !fechaInicio || !fechaFin) return;
     
     setLoading(true);
-    const data = await generarPrefactura(transportistaId, fechaInicio, fechaFin);
+    const data = await generarPrefactura(transportistaId, fechaInicio, fechaFin, incluirActivas);
     setReporte(data);
     setLoading(false);
   };
@@ -30,16 +38,24 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
       const totalAdicionales = g.adicionales.reduce((acc: number, a: any) => acc + a.valor, 0);
       const valorTotal = g.valor_base_cobrado + totalAdicionales;
       
-      const key = `${g.guiaPrecio.codigo}-${valorTotal}`;
+      const key = `${valorTotal}`;
       if (!grupos[key]) {
         grupos[key] = {
           codigo: g.guiaPrecio.codigo,
           descripcion: g.guiaPrecio.descripcion,
           valorUnitario: valorTotal,
           cantidad: 0,
-          total: 0
+          total: 0,
+          descripcionesUnicas: new Set([g.guiaPrecio.descripcion])
         };
+      } else {
+        grupos[key].descripcionesUnicas.add(g.guiaPrecio.descripcion);
+        if (grupos[key].descripcionesUnicas.size > 1) {
+          grupos[key].codigo = 'VARIOS';
+          grupos[key].descripcion = 'VARIOS DESTINOS';
+        }
       }
+      
       grupos[key].cantidad += 1;
       grupos[key].total += valorTotal;
     });
@@ -141,7 +157,20 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
           <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} required />
         </div>
 
-        <button type="submit" className="btn btn-primary" disabled={loading}>
+        <div className={styles.formGroup} style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem', marginBottom: '0.5rem', width: '100%', justifyContent: 'flex-start' }}>
+          <input 
+            type="checkbox" 
+            id="incluirActivas" 
+            checked={incluirActivas} 
+            onChange={e => setIncluirActivas(e.target.checked)} 
+            style={{ width: 'auto', margin: 0, cursor: 'pointer', accentColor: 'var(--primary)', transform: 'scale(1.2)' }}
+          />
+          <label htmlFor="incluirActivas" style={{ margin: 0, fontWeight: 500, cursor: 'pointer', fontSize: '0.9rem' }}>
+            Incluir guías de la semana en curso (No cuadradas)
+          </label>
+        </div>
+
+        <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%' }}>
           {loading ? 'Generando...' : 'Generar Reporte'}
         </button>
       </form>
