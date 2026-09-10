@@ -423,33 +423,36 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', marginTop: '1rem', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginTop: '1rem', alignItems: 'start' }}>
             {precioPreview && (
-              <div className={styles.previewBox} style={{ margin: 0, height: '100%' }}>
-                <h4>Resultado del Análisis</h4>
+              <div className={styles.previewBox} style={{ margin: 0, padding: '1rem', height: '100%' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem' }}>Resultado del Análisis</h4>
                 {precioPreview.todosLosPrecios.length > 1 && (
-                  <p style={{ marginBottom: '15px', color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
-                    Se compararon {precioPreview.todosLosPrecios.length} códigos válidos. 
-                    El sistema ha seleccionado el código <strong>{precioPreview.precio.codigo}</strong> porque tiene el mayor valor (${precioPreview.precio.valor.toFixed(2)}).
+                  <p style={{ marginBottom: '0.5rem', color: 'var(--muted-foreground)', fontSize: '0.75rem' }}>
+                    Seleccionado <strong>{precioPreview.precio.codigo}</strong> entre {precioPreview.todosLosPrecios.length} códigos (${precioPreview.precio.valor.toFixed(2)}).
                   </p>
                 )}
-                <div style={{ backgroundColor: 'var(--background)', padding: '15px', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-                  <p><strong>Código Elegido:</strong> {precioPreview.precio.codigo}</p>
-                  <p><strong>Destino:</strong> {precioPreview.precio.descripcion}</p>
-                  <p><strong>Tipo:</strong> {precioPreview.precio.tipo}</p>
-                  <p><strong>Tarifario Base:</strong> {precioPreview.tarifario.nombre}</p>
-                  <div className={styles.priceTag}>
-                    Valor Base: ${precioPreview.precio.valor.toFixed(2)}
+                <div style={{ backgroundColor: 'var(--background)', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '0.85rem' }}>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <strong>{precioPreview.precio.codigo}</strong> - {precioPreview.precio.descripcion} ({precioPreview.precio.tipo})
+                    <br />
+                    <span style={{ color: 'var(--muted-foreground)', fontSize: '0.75rem' }}>Tarifario: {precioPreview.tarifario.nombre}</span>
                   </div>
-                  <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 600 }}>TICKETS:</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius)', marginBottom: '0.5rem' }}>
+                    <span style={{ fontWeight: 600 }}>Valor Base:</span>
+                    <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>${precioPreview.precio.valor.toFixed(2)}</span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0.25rem' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>TICKETS:</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       <span style={{ color: 'var(--muted-foreground)' }}>$</span>
                       <input 
                         type="number" 
                         step="0.01" 
                         className="form-input" 
-                        style={{ width: '100px', margin: 0 }}
+                        style={{ width: '80px', margin: 0, height: '2rem', fontSize: '0.85rem', padding: '0.25rem 0.5rem' }}
                         value={valorTicket} 
                         onChange={(e) => setValorTicket(parseFloat(e.target.value) || 0)} 
                       />
@@ -461,12 +464,13 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
             
             {!precioPreview && <div />} {/* Empty placeholder if no preview */}
 
-            <div className={styles.adicionalesSection} style={{ margin: 0, height: '100%' }}>
-              <h4 style={{ marginBottom: '1rem', fontWeight: 600 }}>Costos Adicionales (Opcional)</h4>
-              <div className={styles.addAdicional}>
+            <div className={styles.adicionalesSection} style={{ margin: 0, padding: '1rem', height: '100%' }}>
+              <h4 style={{ marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.9rem' }}>Costos Adicionales (Opcional)</h4>
+              <div className={styles.addAdicional} style={{ gap: '0.5rem' }}>
                 <input 
                   type="text" 
                   className="form-input"
+                  style={{ height: '2rem', fontSize: '0.85rem', padding: '0.25rem 0.5rem' }}
                   placeholder="Concepto" 
                   value={nuevoConcepto}
                   onChange={e => setNuevoConcepto(e.target.value)}
@@ -475,18 +479,19 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                   type="number" 
                   className="form-input"
                   step="0.01" 
+                  style={{ height: '2rem', fontSize: '0.85rem', padding: '0.25rem 0.5rem', width: '80px' }}
                   placeholder="Valor ($)" 
                   value={nuevoValor}
                   onChange={e => setNuevoValor(e.target.value)}
                 />
-                <button type="button" onClick={handleAddAdicional} className="btn btn-secondary" style={{ padding: '0.5rem 1rem' }}>
+                <button type="button" onClick={handleAddAdicional} className="btn btn-secondary" style={{ padding: '0.25rem 0.75rem', height: '2rem', fontSize: '0.85rem' }}>
                   <span className="desktop-only">Añadir</span>
                   <span className="mobile-only">+</span>
                 </button>
               </div>
               
               {adicionales.length > 0 && (
-                <ul className={styles.adicionalesList} style={{ marginTop: '1rem' }}>
+                <ul className={styles.adicionalesList} style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
                   {adicionales.map((ad, i) => (
                     <li key={i}>
                       <span>{ad.concepto}</span>
@@ -499,18 +504,18 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem', padding: '1rem', backgroundColor: 'var(--muted)', borderRadius: 'var(--radius)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem', padding: '0.75rem 1rem', backgroundColor: 'var(--muted)', borderRadius: 'var(--radius)' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Total Guía:</span>
-              <span style={{ fontSize: '1.25rem', fontWeight: 700 }}>${ ( (precioPreview?.precio?.valor || 0) + adicionales.reduce((acc, a) => acc + a.valor, 0) ).toFixed(2) }</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Total Guía:</span>
+              <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>${ ( (precioPreview?.precio?.valor || 0) + adicionales.reduce((acc, a) => acc + a.valor, 0) ).toFixed(2) }</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--muted-foreground)' }}>Total Tickets:</span>
-              <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--muted-foreground)' }}>${valorTicket.toFixed(2)}</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted-foreground)' }}>Total Tickets:</span>
+              <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--muted-foreground)' }}>${valorTicket.toFixed(2)}</span>
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', padding: '1rem', fontSize: '1rem' }}>
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', padding: '0.75rem', fontSize: '1rem', height: 'auto' }}>
             Registrar Guía
           </button>
         </form>
