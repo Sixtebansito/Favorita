@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, Check, X, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Check, X, Loader2, Plus, Trash2, FileText } from 'lucide-react';
 import { addPrivateCode, updatePrivateCode, deletePrivateCode } from './actions';
 
 export default function MisTarifariosClient({ misPrecios }: { misPrecios: any[] }) {
