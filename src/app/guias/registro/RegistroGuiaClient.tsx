@@ -133,7 +133,7 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
       let ticket = 0;
       if (res.precio) {
         const baseVal = res.precio.valor;
-        if (baseVal < 120) {
+        if (baseVal <= 100) {
           const dest = res.precio.descripcion.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
           if (['jardin', 'multicentro', 'colon', 'granados', 'america'].some(k => dest.includes(k))) {
             ticket = 8;
