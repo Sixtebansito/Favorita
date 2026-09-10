@@ -35,9 +35,20 @@ export async function generarPrefactura(transportistaId: string, fechaInicio: st
     }
   });
 
-  const normales = guias.filter(g => !['POFASA', 'AGROPESA'].includes(g.cliente_destino.toUpperCase()));
-  const pofasa = guias.filter(g => g.cliente_destino.toUpperCase() === 'POFASA');
-  const agropesa = guias.filter(g => g.cliente_destino.toUpperCase() === 'AGROPESA');
+  const normales = guias.filter(g => {
+    const desc = g.guiaPrecio?.descripcion.toUpperCase() || '';
+    return !desc.includes('POFASA') && !desc.includes('AGROPESA');
+  });
+  
+  const pofasa = guias.filter(g => {
+    const desc = g.guiaPrecio?.descripcion.toUpperCase() || '';
+    return desc.includes('POFASA');
+  });
+  
+  const agropesa = guias.filter(g => {
+    const desc = g.guiaPrecio?.descripcion.toUpperCase() || '';
+    return desc.includes('AGROPESA');
+  });
 
   return {
     normales,
