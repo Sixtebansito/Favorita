@@ -499,9 +499,15 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
             </div>
           </div>
 
-          <div className={styles.totalSection}>
-            <h3>Total Guías: ${ ( (precioPreview?.precio?.valor || 0) + adicionales.reduce((acc, a) => acc + a.valor, 0) ).toFixed(2) }</h3>
-            <h3 style={{ color: 'var(--muted-foreground)' }}>Total Tickets: ${valorTicket.toFixed(2)}</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem', padding: '1rem', backgroundColor: 'var(--muted)', borderRadius: 'var(--radius)' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Total Guía:</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 700 }}>${ ( (precioPreview?.precio?.valor || 0) + adicionales.reduce((acc, a) => acc + a.valor, 0) ).toFixed(2) }</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--muted-foreground)' }}>Total Tickets:</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--muted-foreground)' }}>${valorTicket.toFixed(2)}</span>
+            </div>
           </div>
 
           <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', padding: '1rem', fontSize: '1rem' }}>
@@ -713,16 +719,16 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                       </tbody>
                     </table>
                   </div>
-                  <div style={{ padding: '1rem 1.5rem', backgroundColor: 'var(--muted)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '2rem' }}>
-                    <div>
-                      <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--muted-foreground)', marginRight: '0.5rem' }}>Total Guías:</span>
-                      <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                  <div style={{ padding: '1rem', backgroundColor: 'var(--muted)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted-foreground)' }}>Total Guías:</span>
+                      <span style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--foreground)' }}>
                       ${guiasCabezal.reduce((sum: number, g: any) => sum + g.valor_base_cobrado + g.adicionales.reduce((a: any, b: any) => a + b.valor, 0), 0).toFixed(2)}
                       </span>
                     </div>
-                    <div>
-                      <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--muted-foreground)', marginRight: '0.5rem' }}>Total Tickets:</span>
-                      <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--muted-foreground)' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted-foreground)' }}>Total Tickets:</span>
+                      <span style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--muted-foreground)' }}>
                       ${guiasCabezal.reduce((sum: number, g: any) => sum + (g.valor_ticket || 0), 0).toFixed(2)}
                       </span>
                     </div>
@@ -732,17 +738,17 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
               })}
 
               <div className="card" style={{ padding: '1rem', marginTop: '1rem', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-                <div style={{ margin: 0, fontWeight: 700, fontSize: '1.1rem' }}>TOTAL GLOBAL</div>
-                <div style={{ display: 'flex', gap: '1.5rem', textAlign: 'right' }}>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>GUÍAS</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>
+                <div style={{ margin: 0, fontWeight: 700, fontSize: '1rem' }}>TOTAL GLOBAL</div>
+                <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', textAlign: 'right', justifyContent: 'flex-end' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                    <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>GUÍAS:</div>
+                    <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>
                       ${guiasSemanaVisibles.reduce((sum, g) => sum + g.valor_base_cobrado + g.adicionales.reduce((a: any, b: any) => a + b.valor, 0), 0).toFixed(2)}
                     </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>TICKETS</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                    <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>TICKETS:</div>
+                    <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>
                       ${guiasSemanaVisibles.reduce((sum, g) => sum + (g.valor_ticket || 0), 0).toFixed(2)}
                     </div>
                   </div>
