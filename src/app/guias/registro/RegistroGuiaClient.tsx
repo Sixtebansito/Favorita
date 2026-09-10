@@ -555,7 +555,9 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                     borderBottom: '1px solid var(--border)',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between'
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem'
                   }}>
                     <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>
                       <span style={{ display: 'inline-block', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.875rem', marginRight: '0.75rem' }}>
@@ -565,22 +567,22 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                         {guiasCabezal[0].cabezal.transportista.name}
                       </span>
                     </h4>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--muted-foreground)' }}>
-                        {guiasCabezal.length} {guiasCabezal.length === 1 ? 'Guía' : 'Guías'}
+                        {guiasCabezal.length} <span className="desktop-only">{guiasCabezal.length === 1 ? 'Guía' : 'Guías'}</span>
                       </span>
                       {editingGroupId === placa ? (
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button onClick={saveGroupEdit} disabled={savingActiva} className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-                            {savingActiva ? 'Guardando...' : 'Guardar Todos'}
+                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                          <button onClick={saveGroupEdit} disabled={savingActiva} className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: '2rem' }}>
+                            {savingActiva ? 'Guardando...' : 'Guardar'}
                           </button>
-                          <button onClick={cancelGroupEditing} disabled={savingActiva} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
+                          <button onClick={cancelGroupEditing} disabled={savingActiva} className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: '2rem' }}>
                             Cancelar
                           </button>
                         </div>
                       ) : (
-                        <button onClick={() => startGroupEditing(placa, guiasCabezal)} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-                          Editar Cabezal Completo
+                        <button onClick={() => startGroupEditing(placa, guiasCabezal)} className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: '2rem' }}>
+                          Editar <span className="desktop-only" style={{ marginLeft: '4px' }}>Cabezal</span>
                         </button>
                       )}
                     </div>
@@ -589,14 +591,14 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                     <table className="data-table" style={{ width: '100%', border: 'none' }}>
                       <thead>
                         <tr>
-                          <th className={editingGroupId !== placa ? "hidden md:table-cell" : ""}>Código(s)</th>
+                          <th className={editingGroupId !== placa ? "mobile-hidden" : ""}>Código(s)</th>
                           {editingGroupId === placa && <th>Vehículo</th>}
                           <th>Destino</th>
                           <th>Valor Base</th>
                           <th>Tickets</th>
                           <th>Adicionales</th>
                           <th>Total Guía</th>
-                          <th className={editingGroupId !== placa ? "hidden md:table-cell" : ""}>Fecha Guía</th>
+                          <th className={editingGroupId !== placa ? "mobile-hidden" : ""}>Fecha Guía</th>
                           <th style={{ textAlign: 'right' }}>Acciones</th>
                         </tr>
                       </thead>
@@ -608,7 +610,7 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                           const granTotal = guia.valor_base_cobrado + totalAdicional;
                           return (
                             <tr key={guia.id} style={isEditing ? { backgroundColor: 'var(--accent)' } : {}}>
-                              <td className={editingGroupId !== placa ? "hidden md:table-cell" : ""}>
+                              <td className={editingGroupId !== placa ? "mobile-hidden" : ""}>
                                 <span className="badge badge-secondary">{guia.codigos_evaluados}</span>
                               </td>
                               {editingGroupId === placa && (
@@ -691,7 +693,7 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                                 ${granTotal.toFixed(2)}
                               </td>
                               
-                              <td className={editingGroupId !== placa ? "hidden md:table-cell" : ""}>{new Date(guia.fecha_guia).toLocaleDateString('es-ES')}</td>
+                              <td className={editingGroupId !== placa ? "mobile-hidden" : ""}>{new Date(guia.fecha_guia).toLocaleDateString('es-ES')}</td>
 
                               <td style={{ textAlign: 'right' }}>
                                 {!isEditing && (
