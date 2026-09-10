@@ -168,7 +168,7 @@ export default function GastosClient({
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '2rem', width: '100%', maxWidth: '100%' }}>
       {/* Formulario */}
       <div className="card" style={{ padding: '1.5rem', backgroundColor: 'var(--card)' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -354,9 +354,8 @@ export default function GastosClient({
           </div>
         )}
 
-        <div className="data-table-container" style={{ overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table" style={{ width: '100%', border: 'none' }}>
+        <div className="data-table-container" style={{ overflowX: 'auto', width: '100%', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
+            <table className="data-table" style={{ width: '100%', minWidth: '600px', border: 'none' }}>
             <thead>
               <tr>
                 <th>Fecha</th>
@@ -443,7 +442,6 @@ export default function GastosClient({
               )}
             </tfoot>
           </table>
-          </div>
         </div>
       </div>
 

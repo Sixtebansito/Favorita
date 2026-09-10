@@ -99,6 +99,15 @@
   font-weight: 600;
 }
 
+.badgePlus {
+  background-color: rgba(234, 179, 8, 0.1);
+  color: #ca8a04;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .deleteBtn {
   background-color: transparent;
   border: 1px solid var(--destructive);

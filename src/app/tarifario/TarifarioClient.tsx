@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronRight, Pencil, Check, X, Loader2 } from 'lucide-react';
+import { updateTarifarioNombre, updatePrecioTarifario } from './actions';
 
 export default function TarifarioClient({ tarifarios }: { tarifarios: any[] }) {
   const [file, setFile] = useState<File | null>(null);
@@ -11,6 +12,15 @@ export default function TarifarioClient({ tarifarios }: { tarifarios: any[] }) {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Editing state
+  const [editingTarifarioId, setEditingTarifarioId] = useState<string | null>(null);
+  const [editTarifarioNombre, setEditTarifarioNombre] = useState('');
+  
+  const [editingPrecioId, setEditingPrecioId] = useState<string | null>(null);
+  const [editPrecioDescripcion, setEditPrecioDescripcion] = useState('');
+  const [editPrecioValor, setEditPrecioValor] = useState<number | string>('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -60,6 +70,30 @@ export default function TarifarioClient({ tarifarios }: { tarifarios: any[] }) {
     setExpandedId(expandedId === id ? null : id);
   };
 
+  const handleSaveTarifario = async (id: string) => {
+    if (!editTarifarioNombre.trim()) return;
+    setIsUpdating(true);
+    const res = await updateTarifarioNombre(id, editTarifarioNombre);
+    setIsUpdating(false);
+    if (res.success) {
+      setEditingTarifarioId(null);
+    } else {
+      alert(res.error || 'Error al actualizar');
+    }
+  };
+
+  const handleSavePrecio = async (id: string) => {
+    if (!editPrecioDescripcion.trim() || Number(editPrecioValor) < 0) return;
+    setIsUpdating(true);
+    const res = await updatePrecioTarifario(id, editPrecioDescripcion, Number(editPrecioValor));
+    setIsUpdating(false);
+    if (res.success) {
+      setEditingPrecioId(null);
+    } else {
+      alert(res.error || 'Error al actualizar precio');
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '900px', margin: '0 auto' }}>
       <header>
@@ -91,14 +125,40 @@ export default function TarifarioClient({ tarifarios }: { tarifarios: any[] }) {
                   onClick={() => toggleExpand(tarifario.id)}
                 >
                   <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      {tarifario.nombre}
-                      {tarifario.activo && (
-                        <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '12px', backgroundColor: '#dcfce7', color: '#166534', fontWeight: 'bold' }}>
-                          ACTIVO
-                        </span>
-                      )}
-                    </h3>
+                    {editingTarifarioId === tarifario.id ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          value={editTarifarioNombre} 
+                          onChange={e => setEditTarifarioNombre(e.target.value)} 
+                          style={{ height: '32px', fontSize: '1rem', minWidth: '200px' }}
+                          autoFocus
+                        />
+                        <button className="btn btn-primary" style={{ padding: '0 0.5rem', height: '32px' }} onClick={() => handleSaveTarifario(tarifario.id)} disabled={isUpdating}>
+                          {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                        </button>
+                        <button className="btn btn-secondary" style={{ padding: '0 0.5rem', height: '32px' }} onClick={() => setEditingTarifarioId(null)} disabled={isUpdating}>
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {tarifario.nombre}
+                        <button 
+                          type="button"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)' }} 
+                          onClick={(e) => { e.stopPropagation(); setEditingTarifarioId(tarifario.id); setEditTarifarioNombre(tarifario.nombre); }}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        {tarifario.activo && (
+                          <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '12px', backgroundColor: '#dcfce7', color: '#166534', fontWeight: 'bold' }}>
+                            ACTIVO
+                          </span>
+                        )}
+                      </h3>
+                    )}
                     <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
                       Vigente desde: {new Date(tarifario.fecha_vigencia).toLocaleDateString('es-ES')} | Registros: {tarifario.precios?.length || 0}
                     </p>
@@ -119,13 +179,26 @@ export default function TarifarioClient({ tarifarios }: { tarifarios: any[] }) {
                               <th>Descripción / Destino</th>
                               <th>Tipo</th>
                               <th style={{ textAlign: 'right' }}>Valor Base</th>
+                              <th style={{ width: '80px', textAlign: 'center' }}>Acción</th>
                             </tr>
                           </thead>
                           <tbody>
                             {tarifario.precios.map((precio: any) => (
                               <tr key={precio.id}>
                                 <td style={{ fontWeight: 500 }}>{precio.codigo}</td>
-                                <td>{precio.descripcion}</td>
+                                <td>
+                                  {editingPrecioId === precio.id ? (
+                                    <input 
+                                      type="text" 
+                                      className="form-input" 
+                                      value={editPrecioDescripcion} 
+                                      onChange={e => setEditPrecioDescripcion(e.target.value)} 
+                                      style={{ height: '32px' }}
+                                    />
+                                  ) : (
+                                    precio.descripcion
+                                  )}
+                                </td>
                                 <td>
                                   <span style={{ 
                                     padding: '2px 6px', 
@@ -139,7 +212,34 @@ export default function TarifarioClient({ tarifarios }: { tarifarios: any[] }) {
                                   </span>
                                 </td>
                                 <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                                  ${precio.valor.toFixed(2)}
+                                  {editingPrecioId === precio.id ? (
+                                    <input 
+                                      type="number" 
+                                      step="0.01"
+                                      className="form-input" 
+                                      value={editPrecioValor} 
+                                      onChange={e => setEditPrecioValor(e.target.value)} 
+                                      style={{ height: '32px', width: '100px', marginLeft: 'auto' }}
+                                    />
+                                  ) : (
+                                    `$${precio.valor.toFixed(2)}`
+                                  )}
+                                </td>
+                                <td style={{ textAlign: 'center' }}>
+                                  {editingPrecioId === precio.id ? (
+                                    <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+                                      <button type="button" onClick={() => handleSavePrecio(precio.id)} disabled={isUpdating} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)' }}>
+                                        {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                                      </button>
+                                      <button type="button" onClick={() => setEditingPrecioId(null)} disabled={isUpdating} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)' }}>
+                                        <X size={16} />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button type="button" onClick={() => { setEditingPrecioId(precio.id); setEditPrecioDescripcion(precio.descripcion); setEditPrecioValor(precio.valor); }} style={{ backgroundColor: '#ef4444', border: 'none', cursor: 'pointer', color: 'white', padding: '6px 10px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'background-color 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} title="Editar">
+                                      <Pencil size={14} />
+                                    </button>
+                                  )}
                                 </td>
                               </tr>
                             ))}

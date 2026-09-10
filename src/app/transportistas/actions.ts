@@ -8,6 +8,17 @@ export async function crearTransportista(data: { name: string; ruc: string }) {
   const session = await getUserSession();
   if (!session) return { error: 'No autorizado' };
 
+  if (session.role === 'USER') {
+    const user = await prisma.user.findUnique({
+      where: { id: session.id },
+      include: { transportistas: true }
+    });
+    
+    if (user && user.transportistas.length >= 5) {
+      return { error: 'Límite alcanzado: Los usuarios estándar solo pueden registrar hasta 5 transportistas. Usa un usuario PLUS para acceso ilimitado.' };
+    }
+  }
+
   try {
     const existing = await prisma.transportista.findUnique({
       where: { ruc: data.ruc }
@@ -74,6 +85,23 @@ export async function eliminarCabezal(id: string) {
     return { success: true };
   } catch (error: any) {
     return { error: 'No se puede eliminar el cabezal, posiblemente ya tiene guías asociadas.' };
+  }
+}
+
+export async function eliminarTransportista(id: string) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
+  try {
+    await prisma.transportista.delete({
+      where: { id }
+    });
+    revalidatePath('/transportistas');
+    revalidatePath('/guias/registro');
+    revalidatePath('/semanas');
+    return { success: true };
+  } catch (error: any) {
+    return { error: 'No se puede eliminar el transportista. Posiblemente ya tiene cabezales o guías asociadas. Elimina primero sus cabezales.' };
   }
 }
 

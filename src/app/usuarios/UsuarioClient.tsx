@@ -83,7 +83,8 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
             required
           />
           <select value={role} onChange={e => setRole(e.target.value)}>
-            <option value="USER">Usuario (Operador)</option>
+            <option value="USER">Usuario Normal</option>
+            <option value="USER_PLUS">Usuario Plus</option>
             <option value="ADMIN">Administrador</option>
           </select>
           <button type="submit" className="btn btn-primary">Registrar</button>
@@ -108,8 +109,8 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
                 <td>{u.name}</td>
                 <td>{u.email}</td>
                 <td>
-                  <span className={u.role === 'ADMIN' ? styles.badgeAdmin : styles.badgeUser}>
-                    {u.role}
+                  <span className={u.role === 'ADMIN' ? styles.badgeAdmin : (u.role === 'USER_PLUS' ? styles.badgePlus : styles.badgeUser)}>
+                    {u.role === 'USER_PLUS' ? 'USER PLUS' : u.role}
                   </span>
                 </td>
                 <td>

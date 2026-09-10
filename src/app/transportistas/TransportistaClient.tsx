@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { crearTransportista, crearCabezal, eliminarCabezal, asignarUsuarioATransportista } from './actions';
+import { crearTransportista, crearCabezal, eliminarCabezal, asignarUsuarioATransportista, eliminarTransportista } from './actions';
 import styles from './transportista.module.css';
 
 export default function TransportistaClient({ 
@@ -66,6 +66,13 @@ export default function TransportistaClient({
   const handleEliminarCabezal = async (id: string) => {
     if (confirm('¿Estás seguro de eliminar este cabezal?')) {
       const res = await eliminarCabezal(id);
+      if (res.error) alert(res.error);
+    }
+  };
+
+  const handleEliminarTransportista = async (id: string) => {
+    if (confirm('¿Estás seguro de eliminar este transportista?\nEsta acción no se puede deshacer y solo es posible si no tiene datos asociados (cabezales, guías).')) {
+      const res = await eliminarTransportista(id);
       if (res.error) alert(res.error);
     }
   };
@@ -179,15 +186,33 @@ export default function TransportistaClient({
                   <h4>{t.name}</h4>
                   <span className={styles.ruc}>RUC: {t.ruc}</span>
                 </div>
-                {isAdmin && (
-                  <button 
-                    type="button" 
-                    className={styles.addBtn}
-                    onClick={() => openUserModal(t.id)}
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  {isAdmin && (
+                    <button 
+                      type="button" 
+                      className={styles.addBtn}
+                      onClick={() => openUserModal(t.id)}
+                    >
+                      + Asignar Usuario
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleEliminarTransportista(t.id)}
+                    style={{ 
+                      padding: '0.25rem 0.5rem', 
+                      color: '#ef4444', 
+                      border: '1px solid #ef4444', 
+                      borderRadius: '0.25rem',
+                      background: 'transparent',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer'
+                    }}
+                    title="Eliminar transportista"
                   >
-                    + Asignar Usuario
+                    Eliminar
                   </button>
-                )}
+                </div>
               </div>
               
               {t.users && t.users.length > 0 && (

@@ -65,7 +65,6 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
       guiasAgrupadas.forEach((row: any) => {
         data.push({
           TIPO: tipo,
-          CODIGO: row.codigo,
           DESTINO: row.descripcion,
           VALOR: row.valorUnitario,
           CANTIDAD: row.cantidad,
@@ -75,7 +74,6 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
       const subtotal = guiasAgrupadas.reduce((acc, row) => acc + (row.total || 0), 0);
       data.push({
         TIPO: `${tipo} TOTAL`,
-        CODIGO: '',
         DESTINO: '',
         VALOR: '',
         CANTIDAD: '',
@@ -147,7 +145,6 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Código</th>
                 <th>Destino</th>
                 <th>Valor</th>
                 <th>Cantidad</th>
@@ -157,7 +154,6 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
             <tbody>
               {guiasAgrupadas.map((row: any, i: number) => (
                 <tr key={i}>
-                  <td>{row.codigo}</td>
                   <td>{row.descripcion}</td>
                   <td>${row.valorUnitario.toFixed(2)}</td>
                   <td>{row.cantidad}</td>
@@ -165,7 +161,7 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
                 </tr>
               ))}
               <tr>
-                <td colSpan={4} style={{ textAlign: 'right', fontWeight: 600 }}>Total {titulo}:</td>
+                <td colSpan={3} style={{ textAlign: 'right', fontWeight: 600 }}>Total {titulo}:</td>
                 <td><strong>${subtotal.toFixed(2)}</strong></td>
               </tr>
             </tbody>
@@ -198,20 +194,20 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
           <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} required />
         </div>
 
-        <div className={styles.formGroup} style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem', marginBottom: '0.5rem', width: '100%', justifyContent: 'flex-start' }}>
+        <div className={styles.checkboxGroup}>
           <input 
             type="checkbox" 
             id="incluirActivas" 
             checked={incluirActivas} 
             onChange={e => setIncluirActivas(e.target.checked)} 
-            style={{ width: 'auto', margin: 0, cursor: 'pointer', accentColor: 'var(--primary)', transform: 'scale(1.2)' }}
+            style={{ width: '1.25rem', height: '1.25rem', margin: 0, cursor: 'pointer', accentColor: 'var(--primary)' }}
           />
           <label htmlFor="incluirActivas" style={{ margin: 0, fontWeight: 500, cursor: 'pointer', fontSize: '0.9rem' }}>
             Incluir guías de la semana en curso (No cuadradas)
           </label>
         </div>
 
-        <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%' }}>
+        <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading}>
           {loading ? 'Generando...' : 'Generar Reporte'}
         </button>
       </form>
