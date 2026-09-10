@@ -36,11 +36,13 @@ export async function generarPrefactura(transportistaId: string, fechaInicio: st
   });
 
   const normales = guias.filter(g => !['POFASA', 'AGROPESA'].includes(g.cliente_destino.toUpperCase()));
-  const adicionales = guias.filter(g => ['POFASA', 'AGROPESA'].includes(g.cliente_destino.toUpperCase()));
+  const pofasa = guias.filter(g => g.cliente_destino.toUpperCase() === 'POFASA');
+  const agropesa = guias.filter(g => g.cliente_destino.toUpperCase() === 'AGROPESA');
 
   return {
     normales,
-    adicionales,
+    pofasa,
+    agropesa,
     guiasOriginales: guias // pasamos las guías crudas por si necesitamos los IDs para liquidar
   };
 }

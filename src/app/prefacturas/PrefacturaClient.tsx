@@ -72,18 +72,21 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
         });
       });
       const subtotal = guiasAgrupadas.reduce((acc, row) => acc + row.total, 0);
-      data.push({
-        TIPO: `${tipo} TOTAL`,
-        CODIGO: '',
-        DESTINO: '',
-        VALOR: '',
-        CANTIDAD: '',
-        TOTAL: subtotal
-      });
+      if (guiasAgrupadas.length > 0) {
+        data.push({
+          TIPO: `${tipo} TOTAL`,
+          CODIGO: '',
+          DESTINO: '',
+          VALOR: '',
+          CANTIDAD: '',
+          TOTAL: subtotal
+        });
+      }
     };
 
     addRows("NORMAL", agruparGuias(reporteParaExportar.normales));
-    addRows("ADICIONAL", agruparGuias(reporteParaExportar.adicionales));
+    addRows("POFASA", agruparGuias(reporteParaExportar.pofasa));
+    addRows("AGROPESA", agruparGuias(reporteParaExportar.agropesa));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
@@ -103,15 +106,15 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
     const guiasIds = reporte.guiasOriginales.map((g: any) => g.id);
     
     // Calcular el total
-    const totalNormales = reporte.normales.reduce((acc: number, g: any) => {
+    const sumarGuias = (guias: any[]) => guias.reduce((acc: number, g: any) => {
       const adic = g.adicionales.reduce((s: number, a: any) => s + a.valor, 0);
       return acc + g.valor_base_cobrado + adic;
     }, 0);
-    const totalAdicionales = reporte.adicionales.reduce((acc: number, g: any) => {
-      const adic = g.adicionales.reduce((s: number, a: any) => s + a.valor, 0);
-      return acc + g.valor_base_cobrado + adic;
-    }, 0);
-    const totalPagado = totalNormales + totalAdicionales;
+
+    const totalNormales = sumarGuias(reporte.normales);
+    const totalPofasa = sumarGuias(reporte.pofasa);
+    const totalAgropesa = sumarGuias(reporte.agropesa);
+    const totalPagado = totalNormales + totalPofasa + totalAgropesa;
     const totalTickets = reporte.guiasOriginales.reduce((acc: number, g: any) => acc + (g.valor_ticket || 0), 0);
 
     const res = await liquidarValores(transportistaId, fechaInicio, fechaFin, totalPagado, totalTickets, guiasIds);
@@ -169,9 +172,11 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
       </form>
 
       {reporte && (() => {
-        const totalNormales = reporte.normales.reduce((acc: number, g: any) => acc + g.valor_base_cobrado + g.adicionales.reduce((s: number, a: any) => s + a.valor, 0), 0);
-        const totalAdicionales = reporte.adicionales.reduce((acc: number, g: any) => acc + g.valor_base_cobrado + g.adicionales.reduce((s: number, a: any) => s + a.valor, 0), 0);
-        const totalGeneral = totalNormales + totalAdicionales;
+        const sumarGuias = (guias: any[]) => guias.reduce((acc: number, g: any) => acc + g.valor_base_cobrado + g.adicionales.reduce((s: number, a: any) => s + a.valor, 0), 0);
+        const totalNormales = sumarGuias(reporte.normales);
+        const totalPofasa = sumarGuias(reporte.pofasa);
+        const totalAgropesa = sumarGuias(reporte.agropesa);
+        const totalGeneral = totalNormales + totalPofasa + totalAgropesa;
         const totalTickets = reporte.guiasOriginales.reduce((acc: number, g: any) => acc + (g.valor_ticket || 0), 0);
 
         return (
@@ -238,7 +243,7 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
                   ) : (
                     <tr>
                       <td colSpan={4} style={{ textAlign: 'right', fontWeight: 600 }}>Total de prefactura:</td>
-                      <td><strong>${reporte.normales.reduce((acc: number, g: any) => acc + g.valor_base_cobrado + g.adicionales.reduce((s: number, a: any) => s + a.valor, 0), 0).toFixed(2)}</strong></td>
+                      <td><strong>${totalNormales.toFixed(2)}</strong></td>
                     </tr>
                   )}
                 </tbody>
@@ -247,7 +252,7 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
           </div>
 
           <div className={styles.tabs} style={{ marginTop: '40px' }}>
-            <h3 style={{ color: '#f87171' }}>Prefactura Adicional (POFASA / AGROPESA)</h3>
+            <h3 style={{ color: '#f87171' }}>Prefactura POFASA</h3>
             <div style={{ overflowX: 'auto', width: '100%' }}>
               <table className={styles.table}>
                 <thead>
@@ -260,7 +265,7 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
                   </tr>
                 </thead>
                 <tbody>
-                  {agruparGuias(reporte.adicionales).map((row: any, i: number) => (
+                  {agruparGuias(reporte.pofasa).map((row: any, i: number) => (
                     <tr key={i}>
                       <td>{row.codigo}</td>
                       <td>{row.descripcion}</td>
@@ -269,12 +274,48 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
                       <td><strong>${row.total.toFixed(2)}</strong></td>
                     </tr>
                   ))}
-                  {reporte.adicionales.length === 0 ? (
-                    <tr><td colSpan={5} style={{textAlign: 'center'}}>No hay guías adicionales en este periodo.</td></tr>
+                  {reporte.pofasa.length === 0 ? (
+                    <tr><td colSpan={5} style={{textAlign: 'center'}}>No hay guías POFASA en este periodo.</td></tr>
                   ) : (
                     <tr>
-                      <td colSpan={4} style={{ textAlign: 'right', fontWeight: 600 }}>Total de prefactura:</td>
-                      <td><strong>${reporte.adicionales.reduce((acc: number, g: any) => acc + g.valor_base_cobrado + g.adicionales.reduce((s: number, a: any) => s + a.valor, 0), 0).toFixed(2)}</strong></td>
+                      <td colSpan={4} style={{ textAlign: 'right', fontWeight: 600 }}>Total POFASA:</td>
+                      <td><strong>${totalPofasa.toFixed(2)}</strong></td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className={styles.tabs} style={{ marginTop: '40px' }}>
+            <h3 style={{ color: '#60a5fa' }}>Prefactura AGROPESA</h3>
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Destino</th>
+                    <th>Valor</th>
+                    <th>Cantidad</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agruparGuias(reporte.agropesa).map((row: any, i: number) => (
+                    <tr key={i}>
+                      <td>{row.codigo}</td>
+                      <td>{row.descripcion}</td>
+                      <td>${row.valorUnitario.toFixed(2)}</td>
+                      <td>{row.cantidad}</td>
+                      <td><strong>${row.total.toFixed(2)}</strong></td>
+                    </tr>
+                  ))}
+                  {reporte.agropesa.length === 0 ? (
+                    <tr><td colSpan={5} style={{textAlign: 'center'}}>No hay guías AGROPESA en este periodo.</td></tr>
+                  ) : (
+                    <tr>
+                      <td colSpan={4} style={{ textAlign: 'right', fontWeight: 600 }}>Total AGROPESA:</td>
+                      <td><strong>${totalAgropesa.toFixed(2)}</strong></td>
                     </tr>
                   )}
                 </tbody>
