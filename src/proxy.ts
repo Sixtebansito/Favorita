@@ -10,7 +10,7 @@ function getSecretKey() {
 }
 
 // Define las rutas que requieren estar logeado (ahora la raíz '/' es el dashboard)
-const protectedRoutes = ['/guias', '/semanas', '/prefacturas', '/tarifario', '/usuarios', '/transportistas'];
+const protectedRoutes = ['/guias', '/semanas', '/prefacturas', '/tarifario', '/usuarios', '/transportistas', '/base-de-datos'];
 const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
 
 export async function proxy(request: NextRequest) {
@@ -45,8 +45,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.nextUrl));
   }
 
-  // Si la ruta es de admin (usuarios, tarifario), asegurar que el usuario sea ADMIN
-  const isAdminRoute = path.startsWith('/usuarios') || path.startsWith('/tarifario');
+  // Si la ruta es de admin (usuarios, tarifario, base de datos), asegurar que el usuario sea ADMIN
+  const isAdminRoute = path.startsWith('/usuarios') || path.startsWith('/tarifario') || path.startsWith('/base-de-datos');
   if (isAdminRoute && session?.role !== 'ADMIN') {
     return NextResponse.redirect(new URL('/', request.nextUrl));
   }

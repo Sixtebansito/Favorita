@@ -140,3 +140,18 @@ model AdicionalCatalogo {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+model BackupHistory {
+  id          String   @id @default(cuid())
+  tipo        String   @default("MANUAL") // MANUAL, AUTOMATICO
+  enviadoA    String?  // Correo al que se envió (si aplica)
+  createdAt   DateTime @default(now())
+}
+
+model Configuracion {
+  id              String   @id @default(cuid())
+  clave           String   @unique // Ej: "BACKUP_CRON"
+  valor           String   // JSON stringified o valor simple
+  descripcion     String?
+  updatedAt       DateTime @updatedAt
+}
