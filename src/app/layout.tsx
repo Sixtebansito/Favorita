@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import MobileNavbar from "@/components/MobileNavbar";
 import { getUserSession } from "./actions/auth";
+import { Roboto } from "next/font/google";
 
 const roboto = Roboto({
-  weight: ['400', '500', '700'],
+  weight: ['400', '500', '700', '900'],
   subsets: ['latin'],
-  display: 'swap',
+  variable: '--font-roboto',
 });
+
 
 export const metadata: Metadata = {
   title: "Gestión de Guías",
@@ -24,7 +25,7 @@ export default async function RootLayout({
   const session = await getUserSession();
 
   return (
-    <html lang="es" className={roboto.className}>
+    <html lang="es" className={`${roboto.variable}`}>
       <body>
         {session ? (
           <div className="app-container">

@@ -10,7 +10,7 @@ function getSecretKey() {
 }
 
 // Define las rutas que requieren estar logeado (ahora la raíz '/' es el dashboard)
-const protectedRoutes = ['/guias', '/semanas', '/prefacturas', '/tarifario', '/usuarios', '/transportistas', '/base-de-datos'];
+const protectedRoutes = ['/guias', '/semanas', '/prefacturas', '/gastos', '/tarifario', '/usuarios', '/transportistas', '/base-de-datos'];
 const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
 
 export async function proxy(request: NextRequest) {

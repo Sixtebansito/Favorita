@@ -1,5 +1,5 @@
 :root {
-  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-sans: var(--font-roboto), system-ui, sans-serif;
   
   --background: #ffffff;
   --foreground: #09090b;

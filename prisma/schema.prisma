@@ -35,8 +35,10 @@ model Transportista {
   users         User[]         @relation("UserTransportistas")
   cabezales     Cabezal[]
   liquidaciones Liquidacion[]
-  cierresSemana CierreSemana[]
-  createdAt     DateTime       @default(now())
+  cierresSemana   CierreSemana[]
+  gastos          Gasto[]
+  cierresMesGasto CierreMesGasto[]
+  createdAt       DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
 
@@ -47,6 +49,7 @@ model Cabezal {
   transportistaId String
   transportista   Transportista @relation(fields: [transportistaId], references: [id], onDelete: Cascade)
   guias           Guia[]
+  gastos          Gasto[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 }
@@ -154,4 +157,33 @@ model Configuracion {
   valor           String   // JSON stringified o valor simple
   descripcion     String?
   updatedAt       DateTime @updatedAt
+}
+
+model Gasto {
+  id               String          @id @default(cuid())
+  transportistaId  String
+  transportista    Transportista   @relation(fields: [transportistaId], references: [id], onDelete: Cascade)
+  cabezalId        String?         // Opcional, para asignar el gasto a un camión específico
+  cabezal          Cabezal?        @relation(fields: [cabezalId], references: [id], onDelete: SetNull)
+  fecha            DateTime
+  concepto         String          // Ej: Combustible, Llantas, Peajes, Viáticos, Otros
+  descripcion      String?         // Notas adicionales
+  valor            Float
+  estado           String          @default("ACTIVO") // ACTIVO, CERRADO
+  cierreMesGastoId String?
+  cierreMesGasto   CierreMesGasto? @relation(fields: [cierreMesGastoId], references: [id], onDelete: SetNull)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model CierreMesGasto {
+  id              String        @id @default(cuid())
+  transportistaId String
+  transportista   Transportista @relation(fields: [transportistaId], references: [id], onDelete: Cascade)
+  fecha_cierre    DateTime      @default(now())
+  mes_referencia  String        // ej: "Agosto 2026"
+  total           Float
+  gastos          Gasto[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
