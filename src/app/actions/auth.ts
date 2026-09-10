@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
+import { sendLoginNotificationEmail } from '@/lib/email';
 
 const SESSION_COOKIE_NAME = 'auth_session';
 
@@ -66,6 +67,9 @@ export async function login(formData: FormData) {
     maxAge: 60 * 60 * 24 * 7, // 1 semana
     path: '/',
   });
+
+  // Enviar notificación de inicio de sesión (se envía de forma asíncrona)
+  sendLoginNotificationEmail(user.email, user.name).catch(console.error);
 
   return { success: true };
 }
