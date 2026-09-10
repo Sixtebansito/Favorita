@@ -50,10 +50,16 @@ export async function generarPrefactura(transportistaId: string, fechaInicio: st
     return desc.includes('AGROPESA');
   });
 
+  const normalesCabezal = normales.filter(g => (g.cabezal.tipo || 'CABEZAL') === 'CABEZAL');
+  const normalesOtawa = normales.filter(g => g.cabezal.tipo === 'OTAWA');
+  const pofasaCabezal = pofasa; // OTAWA no hace viajes a POFASA
+  const agropesaCabezal = agropesa; // OTAWA no hace viajes a AGROPESA
+
   return {
-    normales,
-    pofasa,
-    agropesa,
+    normalesCabezal,
+    normalesOtawa,
+    pofasaCabezal,
+    agropesaCabezal,
     guiasOriginales: guias // pasamos las guías crudas por si necesitamos los IDs para liquidar
   };
 }

@@ -27,13 +27,15 @@ export async function crearTransportista(data: { name: string; ruc: string }) {
     });
 
     revalidatePath('/transportistas');
+    revalidatePath('/guias/registro');
+    revalidatePath('/semanas');
     return { success: true };
   } catch (error: any) {
     return { error: error.message };
   }
 }
 
-export async function crearCabezal(data: { placa: string; transportistaId: string }) {
+export async function crearCabezal(data: { placa: string; transportistaId: string; tipo: string }) {
   const session = await getUserSession();
   if (!session) return { error: 'No autorizado' };
 
@@ -46,11 +48,14 @@ export async function crearCabezal(data: { placa: string; transportistaId: strin
     await prisma.cabezal.create({
       data: {
         placa: data.placa,
+        tipo: data.tipo,
         transportistaId: data.transportistaId
       }
     });
 
     revalidatePath('/transportistas');
+    revalidatePath('/guias/registro');
+    revalidatePath('/semanas');
     return { success: true };
   } catch (error: any) {
     return { error: error.message };

@@ -37,8 +37,15 @@ export default async function SemanasPage() {
     }
   });
 
-  // Filter out any closures that have 0 'CUADRADA' guias left
   const cierresActivos = cierres.filter(c => c.guias.length > 0);
+
+  const cabezales = await prisma.cabezal.findMany({
+    where: isAdmin ? undefined : {
+      transportista: {
+        users: { some: { id: session.id } }
+      }
+    }
+  });
 
   return (
     <div className="page-container">
@@ -49,7 +56,7 @@ export default async function SemanasPage() {
         </p>
       </header>
 
-      <SemanasClient cierres={cierresActivos} />
+      <SemanasClient cierres={cierresActivos} cabezales={cabezales} />
     </div>
   );
 }

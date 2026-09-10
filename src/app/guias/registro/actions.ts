@@ -58,7 +58,11 @@ export async function lookupPreciosMultiple(codigos: string[], fecha: string) {
   const precios = await prisma.guiaPrecio.findMany({
     where: {
       tarifarioId: tarifario.id,
-      codigo: { in: codigos }
+      codigo: { in: codigos },
+      OR: [
+        { userId: null },
+        { userId: session.id }
+      ]
     }
   });
 
@@ -84,7 +88,7 @@ export async function lookupPreciosMultiple(codigos: string[], fecha: string) {
 
 export async function addPrecioToTarifario(tarifarioId: string, data: {codigo: string, tipo: string, descripcion: string, valor: number}) {
   const session = await getUserSession();
-  if (!session || session.role !== 'ADMIN') return { error: 'No autorizado' };
+  if (!session) return { error: 'No autenticado' };
 
   try {
     const nuevoPrecio = await prisma.guiaPrecio.create({
@@ -93,7 +97,8 @@ export async function addPrecioToTarifario(tarifarioId: string, data: {codigo: s
         codigo: data.codigo,
         tipo: data.tipo,
         descripcion: data.descripcion,
-        valor: data.valor
+        valor: data.valor,
+        userId: session.role === 'ADMIN' ? null : session.id
       }
     });
     return { success: true, precio: nuevoPrecio };
@@ -210,25 +215,29 @@ export async function cerrarSemanaGlobal(transportistaIdFiltro?: string) {
       return { error: 'No hay guías activas para cuadrar.' };
     }
 
-    // Agrupar guías por transportistaId
-    const porTransportista: Record<string, { guiasIds: string[], total: number, totalTickets: number }> = {};
+    // Agrupar guías por transportistaId y tipo de cabezal
+    const porTransportistaYTipo: Record<string, { transId: string, tipo: string, guiasIds: string[], total: number, totalTickets: number }> = {};
 
     guiasActivas.forEach(g => {
       const transId = g.cabezal.transportistaId;
-      if (!porTransportista[transId]) {
-        porTransportista[transId] = { guiasIds: [], total: 0, totalTickets: 0 };
+      const tipo = g.cabezal.tipo || 'CABEZAL';
+      const key = `${transId}_${tipo}`;
+
+      if (!porTransportistaYTipo[key]) {
+        porTransportistaYTipo[key] = { transId, tipo, guiasIds: [], total: 0, totalTickets: 0 };
       }
-      porTransportista[transId].guiasIds.push(g.id);
+      porTransportistaYTipo[key].guiasIds.push(g.id);
       
       const totalAdicionales = g.adicionales.reduce((acc, ad) => acc + ad.valor, 0);
-      porTransportista[transId].total += (g.valor_base_cobrado + totalAdicionales);
-      porTransportista[transId].totalTickets += g.valor_ticket;
+      porTransportistaYTipo[key].total += (g.valor_base_cobrado + totalAdicionales);
+      porTransportistaYTipo[key].totalTickets += g.valor_ticket;
     });
 
-    for (const [transId, data] of Object.entries(porTransportista)) {
+    for (const [key, data] of Object.entries(porTransportistaYTipo)) {
       const cierre = await prisma.cierreSemana.create({
         data: {
-          transportistaId: transId,
+          transportistaId: data.transId,
+          tipo: data.tipo,
           total: data.total,
           total_tickets: data.totalTickets
         }
@@ -268,14 +277,22 @@ export async function eliminarGuiaActiva(guiaId: string) {
   }
 }
 
-export async function actualizarValorGuiaActiva(guiaId: string, nuevoValorBase: number, nuevoValorTicket: number, nuevosAdicionales: { id: string; concepto?: string; valor: number }[]) {
+export async function actualizarValorGuiaActiva(guiaId: string, nuevoValorBase: number, nuevoValorTicket: number, nuevosAdicionales: { id: string; concepto?: string; valor: number }[], cabezalId?: string) {
   const session = await getUserSession();
   if (!session) return { error: 'No autorizado' };
 
   try {
-    await prisma.guia.update({
+    const dataToUpdate: any = {
+      valor_base_cobrado: nuevoValorBase,
+      valor_ticket: nuevoValorTicket,
+    };
+    if (cabezalId) {
+      dataToUpdate.cabezalId = cabezalId;
+    }
+
+    const guia = await prisma.guia.update({
       where: { id: guiaId },
-      data: { valor_base_cobrado: nuevoValorBase, valor_ticket: nuevoValorTicket }
+      data: dataToUpdate,
     });
     for (const adic of nuevosAdicionales) {
       if (adic.id.startsWith('new_') && adic.concepto) {

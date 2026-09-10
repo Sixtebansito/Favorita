@@ -17,6 +17,7 @@ model User {
   transportistas Transportista[] @relation("UserTransportistas")
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  GuiaPrecio     GuiaPrecio[]
 }
 
 model PasswordResetToken {
@@ -28,20 +29,21 @@ model PasswordResetToken {
 }
 
 model Transportista {
-  id        String    @id @default(cuid())
-  name      String
-  ruc       String    @unique
-  users     User[]    @relation("UserTransportistas")
-  cabezales Cabezal[]
+  id            String         @id @default(cuid())
+  name          String
+  ruc           String         @unique
+  users         User[]         @relation("UserTransportistas")
+  cabezales     Cabezal[]
   liquidaciones Liquidacion[]
   cierresSemana CierreSemana[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Cabezal {
   id              String        @id @default(cuid())
   placa           String        @unique
+  tipo            String        @default("CABEZAL") // CABEZAL, OTAWA
   transportistaId String
   transportista   Transportista @relation(fields: [transportistaId], references: [id], onDelete: Cascade)
   guias           Guia[]
@@ -51,8 +53,8 @@ model Cabezal {
 
 model Tarifario {
   id             String       @id @default(cuid())
-  nombre         String       // ej: "Precios Agosto"
-  fecha_vigencia DateTime     // A partir de qué fecha son válidos
+  nombre         String // ej: "Precios Agosto"
+  fecha_vigencia DateTime // A partir de qué fecha son válidos
   activo         Boolean      @default(true)
   precios        GuiaPrecio[]
   createdAt      DateTime     @default(now())
@@ -63,8 +65,10 @@ model GuiaPrecio {
   id          String    @id @default(cuid())
   tarifarioId String
   tarifario   Tarifario @relation(fields: [tarifarioId], references: [id], onDelete: Cascade)
-  codigo      String    // ej: "123" o "123S"
-  tipo        String    // "SECO" o "FRIO"
+  userId      String? // Para códigos privados de un usuario específico
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codigo      String // ej: "123" o "123S"
+  tipo        String // "SECO" o "FRIO"
   descripcion String
   valor       Float
   guias       Guia[]
@@ -78,10 +82,10 @@ model Guia {
   cabezal            Cabezal         @relation(fields: [cabezalId], references: [id], onDelete: Restrict)
   guiaPrecioId       String
   guiaPrecio         GuiaPrecio      @relation(fields: [guiaPrecioId], references: [id], onDelete: Restrict)
-  fecha_guia         DateTime        // Fecha real de la guía, determina el tarifario a usar
-  valor_base_cobrado Float           // Snapshot del valor base en ese momento
-  cliente_destino    String          // ej: "POFASA", "AGROPESA", u otros
-  codigos_evaluados  String?         // ej: "123, 124, 125S"
+  fecha_guia         DateTime // Fecha real de la guía, determina el tarifario a usar
+  valor_base_cobrado Float // Snapshot del valor base en ese momento
+  cliente_destino    String // ej: "POFASA", "AGROPESA", u otros
+  codigos_evaluados  String? // ej: "123, 124, 125S"
   estado             String          @default("ACTIVA") // ACTIVA, CUADRADA, LIQUIDADA
   liquidacionId      String?
   liquidacion        Liquidacion?    @relation(fields: [liquidacionId], references: [id], onDelete: SetNull)
@@ -97,6 +101,7 @@ model CierreSemana {
   id              String        @id @default(cuid())
   transportistaId String
   transportista   Transportista @relation(fields: [transportistaId], references: [id], onDelete: Cascade)
+  tipo            String        @default("CABEZAL") // CABEZAL, OTAWA
   fecha_cierre    DateTime      @default(now())
   total           Float
   total_tickets   Float         @default(0)
@@ -122,8 +127,8 @@ model GuiaAdicional {
   id        String   @id @default(cuid())
   guiaId    String
   guia      Guia     @relation(fields: [guiaId], references: [id], onDelete: Cascade)
-  concepto  String   // ej: "Termo King"
-  valor     Float    // Valor cobrado (puede ser modificado)
+  concepto  String // ej: "Termo King"
+  valor     Float // Valor cobrado (puede ser modificado)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

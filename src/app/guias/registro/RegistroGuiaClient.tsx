@@ -61,13 +61,10 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   // Estados para la edición en línea de la semana activa
-  const [editingActivaId, setEditingActivaId] = useState<string | null>(null);
-  const [editBaseValueActiva, setEditBaseValueActiva] = useState<number>(0);
-  const [editTicketActiva, setEditTicketActiva] = useState<number>(0);
-  const [editAdicionalesActiva, setEditAdicionalesActiva] = useState<{id: string, concepto?: string, valor: number}[]>([]);
-  const [newAdicConceptoActiva, setNewAdicConceptoActiva] = useState('');
-  const [newAdicValorActiva, setNewAdicValorActiva] = useState('');
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [groupEdits, setGroupEdits] = useState<Record<string, any>>({});
   const [savingActiva, setSavingActiva] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchGuiasSemana = async () => {
     setCargandoGuias(true);
@@ -231,44 +228,98 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
   };
 
   const handleEliminarActiva = async (id: string) => {
-    if (!window.confirm('¿Estás seguro de eliminar esta guía?')) return;
-    const res = await eliminarGuiaActiva(id);
-    if (res.error) {
-      alert(res.error);
-    } else {
-      fetchGuiasSemana();
+    if (confirm("¿Estás seguro de eliminar esta guía?")) {
+      setDeletingId(id);
+      await eliminarGuiaActiva(id);
+      await fetchGuiasSemana();
+      setDeletingId(null);
     }
   };
 
-  const startEditingActiva = (guia: any) => {
-    setEditingActivaId(guia.id);
-    setEditBaseValueActiva(guia.valor_base_cobrado);
-    setEditTicketActiva(guia.valor_ticket || 0);
-    setEditAdicionalesActiva(guia.adicionales.map((a: any) => ({ id: a.id, concepto: a.concepto, valor: a.valor })));
-    setNewAdicConceptoActiva('');
-    setNewAdicValorActiva('');
+  const startGroupEditing = (placa: string, guiasCabezal: any[]) => {
+    setEditingGroupId(placa);
+    const initialEdits: any = {};
+    guiasCabezal.forEach((guia: any) => {
+      initialEdits[guia.id] = {
+        baseValue: guia.valor_base_cobrado,
+        ticketValue: guia.valor_ticket || 0,
+        adicionales: guia.adicionales.map((a: any) => ({ id: a.id, concepto: a.concepto, valor: a.valor })),
+        cabezalId: guia.cabezalId,
+        newAdicConcepto: '',
+        newAdicValor: ''
+      };
+    });
+    setGroupEdits(initialEdits);
   };
 
-  const handleAdicionalChangeActiva = (id: string, newValue: string) => {
-    setEditAdicionalesActiva(prev => prev.map(a => a.id === id ? { ...a, valor: parseFloat(newValue) || 0 } : a));
+  const cancelGroupEditing = () => {
+    setEditingGroupId(null);
+    setGroupEdits({});
   };
 
-  const handleAddNewAdicionalActiva = () => {
-    if (!newAdicConceptoActiva || !newAdicValorActiva) return;
-    setEditAdicionalesActiva([...editAdicionalesActiva, { id: `new_${Date.now()}`, concepto: newAdicConceptoActiva, valor: parseFloat(newAdicValorActiva) }]);
-    setNewAdicConceptoActiva('');
-    setNewAdicValorActiva('');
+  const handleGroupEditChange = (guiaId: string, field: string, value: any) => {
+    setGroupEdits(prev => ({
+      ...prev,
+      [guiaId]: {
+        ...prev[guiaId],
+        [field]: value
+      }
+    }));
   };
 
-  const saveEditActiva = async () => {
-    if (!editingActivaId) return;
+  const handleGroupAdicionalChange = (guiaId: string, adicId: string, newValue: string) => {
+    setGroupEdits(prev => {
+      const g = prev[guiaId];
+      return {
+        ...prev,
+        [guiaId]: {
+          ...g,
+          adicionales: g.adicionales.map((a: any) => a.id === adicId ? { ...a, valor: parseFloat(newValue) || 0 } : a)
+        }
+      };
+    });
+  };
+
+  const handleAddNewAdicionalGroup = (guiaId: string) => {
+    setGroupEdits(prev => {
+      const g = prev[guiaId];
+      if (!g.newAdicConcepto || !g.newAdicValor) return prev;
+      return {
+        ...prev,
+        [guiaId]: {
+          ...g,
+          adicionales: [...g.adicionales, { id: `new_${Date.now()}`, concepto: g.newAdicConcepto, valor: parseFloat(g.newAdicValor) }],
+          newAdicConcepto: '',
+          newAdicValor: ''
+        }
+      };
+    });
+  };
+
+  const saveGroupEdit = async () => {
+    if (!editingGroupId) return;
     setSavingActiva(true);
-    const res = await actualizarValorGuiaActiva(editingActivaId, editBaseValueActiva, editTicketActiva, editAdicionalesActiva);
-    if (res.error) {
+    
+    // Preparar el arreglo de updates
+    const updates = Object.keys(groupEdits).map(guiaId => {
+      const edit = groupEdits[guiaId];
+      return {
+        guiaId,
+        nuevoValorBase: edit.baseValue,
+        nuevoValorTicket: edit.ticketValue,
+        nuevosAdicionales: edit.adicionales,
+        cabezalId: edit.cabezalId
+      };
+    });
+
+    const { actualizarValoresMultiples } = await import('../../semanas/actions');
+    const res = await actualizarValoresMultiples(updates);
+    
+    if (res?.error) {
       alert("Error al actualizar: " + res.error);
     } else {
-      setEditingActivaId(null);
-      fetchGuiasSemana();
+      await fetchGuiasSemana();
+      cancelGroupEditing();
     }
     setSavingActiva(false);
   };
@@ -315,7 +366,7 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                 <option value="">Selecciona un cabezal</option>
                 {cabezalesFiltrados.map(c => (
                   <option key={c.id} value={c.id}>
-                    {c.placa}
+                    {c.placa} ({c.tipo || 'CABEZAL'})
                   </option>
                 ))}
               </select>
@@ -508,49 +559,85 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                   }}>
                     <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>
                       <span style={{ display: 'inline-block', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.875rem', marginRight: '0.75rem' }}>
-                        {placa}
+                        {placa} ({guiasCabezal[0].cabezal.tipo || 'CABEZAL'})
                       </span>
                       <span style={{ color: 'var(--muted-foreground)', fontWeight: 'normal', fontSize: '0.875rem' }}>
                         {guiasCabezal[0].cabezal.transportista.name}
                       </span>
                     </h4>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--muted-foreground)' }}>
-                      {guiasCabezal.length} {guiasCabezal.length === 1 ? 'Guía' : 'Guías'}
-                    </span>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--muted-foreground)' }}>
+                        {guiasCabezal.length} {guiasCabezal.length === 1 ? 'Guía' : 'Guías'}
+                      </span>
+                      {editingGroupId === placa ? (
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button onClick={saveGroupEdit} disabled={savingActiva} className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
+                            {savingActiva ? 'Guardando...' : 'Guardar Todos'}
+                          </button>
+                          <button onClick={cancelGroupEditing} disabled={savingActiva} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
+                            Cancelar
+                          </button>
+                        </div>
+                      ) : (
+                        <button onClick={() => startGroupEditing(placa, guiasCabezal)} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
+                          Editar Cabezal Completo
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div style={{ overflowX: 'auto' }}>
                     <table className="data-table" style={{ width: '100%', border: 'none' }}>
                       <thead>
                         <tr>
-                          <th>Código(s)</th>
+                          <th className={editingGroupId !== placa ? "hidden md:table-cell" : ""}>Código(s)</th>
+                          {editingGroupId === placa && <th>Vehículo</th>}
                           <th>Destino</th>
                           <th>Valor Base</th>
-                          <th>Adicionales</th>
-                          <th>Total</th>
                           <th>Tickets</th>
-                          <th>Fecha</th>
+                          <th>Adicionales</th>
+                          <th>Total Guía</th>
+                          <th className={editingGroupId !== placa ? "hidden md:table-cell" : ""}>Fecha Guía</th>
                           <th style={{ textAlign: 'right' }}>Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
                         {sortedGuias.map((guia: any) => {
-                          const isEditing = editingActivaId === guia.id;
+                          const editState = groupEdits[guia.id];
+                          const isEditing = editingGroupId === placa && editState;
                           const totalAdicional = guia.adicionales.reduce((acc: number, a: any) => acc + a.valor, 0);
                           const granTotal = guia.valor_base_cobrado + totalAdicional;
                           return (
                             <tr key={guia.id} style={isEditing ? { backgroundColor: 'var(--accent)' } : {}}>
-                              <td>
+                              <td className={editingGroupId !== placa ? "hidden md:table-cell" : ""}>
                                 <span className="badge badge-secondary">{guia.codigos_evaluados}</span>
                               </td>
+                              {editingGroupId === placa && (
+                                <td>
+                                  {isEditing ? (
+                                    <select 
+                                      className="form-select" 
+                                      value={editState.cabezalId} 
+                                      onChange={(e) => handleGroupEditChange(guia.id, 'cabezalId', e.target.value)}
+                                      style={{ width: '120px', padding: '0.25rem' }}
+                                    >
+                                      {cabezales.filter(c => c.transportistaId === guia.cabezal.transportistaId).map(c => (
+                                        <option key={c.id} value={c.id}>{c.placa} ({c.tipo || 'CABEZAL'})</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <span style={{ color: 'var(--muted-foreground)' }}>{guia.cabezal.placa} ({guia.cabezal.tipo || 'CABEZAL'})</span>
+                                  )}
+                                </td>
+                              )}
                               <td>{guia.guiaPrecio?.descripcion || guia.cliente_destino}</td>
                               <td>
                                 {isEditing ? (
                                   <input 
                                     type="number" 
                                     className="form-input" 
-                                    value={editBaseValueActiva} 
-                                    onChange={(e) => setEditBaseValueActiva(parseFloat(e.target.value) || 0)}
-                                    style={{ width: '100px' }}
+                                    value={editState.baseValue} 
+                                    onChange={(e) => handleGroupEditChange(guia.id, 'baseValue', parseFloat(e.target.value) || 0)}
+                                    style={{ width: '80px' }}
                                   />
                                 ) : (
                                   `$${guia.valor_base_cobrado.toFixed(2)}`
@@ -558,84 +645,64 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                               </td>
                               <td>
                                 {isEditing ? (
-                                  <div>
-                                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.875rem' }}>
-                                      {editAdicionalesActiva.map((ad: any) => (
-                                        <li key={ad.id} style={{ marginBottom: '0.5rem' }}>
-                                          {ad.concepto}: 
-                                          <input 
-                                            type="number" 
-                                            className="form-input" 
-                                            value={ad.valor || 0}
-                                            onChange={(e) => handleAdicionalChangeActiva(ad.id, e.target.value)}
-                                            style={{ width: '80px', display: 'inline-block', marginLeft: '0.5rem' }}
-                                          />
-                                        </li>
-                                      ))}
-                                    </ul>
-                                    <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.5rem' }}>
-                                      <input type="text" placeholder="Concepto" className="form-input" style={{ width: '100px', fontSize: '0.75rem', padding: '0.25rem' }} value={newAdicConceptoActiva} onChange={e => setNewAdicConceptoActiva(e.target.value)} />
-                                      <input type="number" placeholder="Valor" className="form-input" style={{ width: '70px', fontSize: '0.75rem', padding: '0.25rem' }} value={newAdicValorActiva} onChange={e => setNewAdicValorActiva(e.target.value)} />
-                                      <button className="btn btn-secondary" onClick={handleAddNewAdicionalActiva} type="button" style={{ padding: '0.25rem 0.5rem' }}>+</button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  guia.adicionales.length > 0 ? (
-                                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.875rem' }}>
-                                      {guia.adicionales.map((ad: any) => (
-                                        <li key={ad.id}>
-                                          {ad.concepto}: <strong style={{ color: 'var(--foreground)' }}>${ad.valor.toFixed(2)}</strong>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  ) : (
-                                    <span style={{ color: 'var(--muted-foreground)' }}>-</span>
-                                  )
-                                )}
-                              </td>
-                              <td>
-                                {isEditing ? (
-                                  <span style={{ color: 'var(--muted-foreground)' }}>Auto...</span>
-                                ) : (
-                                  <strong style={{ fontSize: '1rem', color: 'var(--primary)' }}>${granTotal.toFixed(2)}</strong>
-                                )}
-                              </td>
-                              <td>
-                                {isEditing ? (
                                   <input 
                                     type="number" 
                                     className="form-input" 
-                                    value={editTicketActiva} 
-                                    onChange={(e) => setEditTicketActiva(parseFloat(e.target.value) || 0)}
+                                    value={editState.ticketValue} 
+                                    onChange={(e) => handleGroupEditChange(guia.id, 'ticketValue', parseFloat(e.target.value) || 0)}
                                     style={{ width: '80px' }}
                                   />
                                 ) : (
                                   `$${(guia.valor_ticket || 0).toFixed(2)}`
                                 )}
                               </td>
-                              
-                              {/* Fecha */}
-                              <td>{new Date(guia.fecha_guia).toLocaleDateString('es-ES')}</td>
-
-                              <td style={{ textAlign: 'right' }}>
+                              <td>
                                 {isEditing ? (
-                                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                    <button className="btn btn-primary" onClick={saveEditActiva} disabled={savingActiva}>
-                                      {savingActiva ? '...' : 'Guardar'}
-                                    </button>
-                                    <button className="btn btn-secondary" onClick={() => setEditingActivaId(null)} disabled={savingActiva}>
-                                      Cancelar
-                                    </button>
+                                  <div>
+                                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.875rem' }}>
+                                      {editState.adicionales.map((ad: any) => (
+                                        <li key={ad.id} style={{ marginBottom: '0.25rem' }}>
+                                          <span style={{ display: 'inline-block', width: '80px' }}>{ad.concepto}:</span>
+                                          <input 
+                                            type="number" 
+                                            className="form-input" 
+                                            value={ad.valor || 0}
+                                            onChange={(e) => handleGroupAdicionalChange(guia.id, ad.id, e.target.value)}
+                                            style={{ width: '80px', display: 'inline-block', marginLeft: '0.5rem' }}
+                                          />
+                                        </li>
+                                      ))}
+                                    </ul>
+                                    <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.5rem' }}>
+                                      <input type="text" placeholder="Concepto" className="form-input" style={{ width: '100px', fontSize: '0.75rem', padding: '0.25rem' }} value={editState.newAdicConcepto} onChange={e => handleGroupEditChange(guia.id, 'newAdicConcepto', e.target.value)} />
+                                      <input type="number" placeholder="Valor" className="form-input" style={{ width: '70px', fontSize: '0.75rem', padding: '0.25rem' }} value={editState.newAdicValor} onChange={e => handleGroupEditChange(guia.id, 'newAdicValor', e.target.value)} />
+                                      <button className="btn btn-secondary" onClick={() => handleAddNewAdicionalGroup(guia.id)} type="button" style={{ padding: '0.25rem 0.5rem' }}>+</button>
+                                    </div>
                                   </div>
                                 ) : (
-                                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                    <button className="btn btn-secondary" onClick={() => startEditingActiva(guia)}>
-                                      Editar
-                                    </button>
-                                    <button className="btn btn-danger" onClick={() => handleEliminarActiva(guia.id)}>
-                                      Eliminar
-                                    </button>
-                                  </div>
+                                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
+                                    {guia.adicionales.map((ad: any) => (
+                                      <li key={ad.id}>{ad.concepto}: ${ad.valor.toFixed(2)}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </td>
+                              <td style={{ fontWeight: 500 }}>
+                                ${granTotal.toFixed(2)}
+                              </td>
+                              
+                              <td className={editingGroupId !== placa ? "hidden md:table-cell" : ""}>{new Date(guia.fecha_guia).toLocaleDateString('es-ES')}</td>
+
+                              <td style={{ textAlign: 'right' }}>
+                                {!isEditing && (
+                                  <button 
+                                    onClick={() => handleEliminarActiva(guia.id)}
+                                    disabled={deletingId === guia.id}
+                                    style={{ background: 'none', border: 'none', color: 'var(--destructive)', cursor: 'pointer', fontSize: '1.25rem', opacity: 0.7 }}
+                                    title="Eliminar guía"
+                                  >
+                                    🗑
+                                  </button>
                                 )}
                               </td>
                             </tr>

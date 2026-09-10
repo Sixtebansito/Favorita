@@ -21,6 +21,7 @@ export default function TransportistaClient({
 
   // Cabezal Form
   const [placa, setPlaca] = useState('');
+  const [tipoVehiculo, setTipoVehiculo] = useState('CABEZAL');
   const [selectedTransportistaId, setSelectedTransportistaId] = useState('');
   const [showCabezalModal, setShowCabezalModal] = useState(false);
 
@@ -44,6 +45,7 @@ export default function TransportistaClient({
   const openCabezalModal = (transportistaId: string) => {
     setSelectedTransportistaId(transportistaId);
     setPlaca('');
+    setTipoVehiculo('CABEZAL');
     setShowCabezalModal(true);
   };
 
@@ -51,12 +53,13 @@ export default function TransportistaClient({
     e.preventDefault();
     if (!placa || !selectedTransportistaId) return;
     setError(null);
-    const res = await crearCabezal({ placa: placa.toUpperCase(), transportistaId: selectedTransportistaId });
+    const res = await crearCabezal({ placa: placa.toUpperCase(), transportistaId: selectedTransportistaId, tipo: tipoVehiculo });
     if (res.error) {
       setError(res.error);
     } else {
       setShowCabezalModal(false);
       setPlaca('');
+      setTipoVehiculo('CABEZAL');
     }
   };
 
@@ -219,7 +222,7 @@ export default function TransportistaClient({
                 <ul className={styles.placasList}>
                   {t.cabezales.map((c: any) => (
                     <li key={c.id}>
-                      <span className={styles.placaBadge}>{c.placa}</span>
+                      <span className={styles.placaBadge}>{c.placa} <span style={{fontSize: '0.65rem', opacity: 0.8, marginLeft: '4px'}}>({c.tipo})</span></span>
                       <button 
                         className={styles.deleteBtn}
                         onClick={() => handleEliminarCabezal(c.id)}
@@ -283,6 +286,15 @@ export default function TransportistaClient({
                 onChange={e => setPlaca(e.target.value)}
                 required
               />
+              <select
+                className="form-select"
+                value={tipoVehiculo}
+                onChange={e => setTipoVehiculo(e.target.value)}
+                required
+              >
+                <option value="CABEZAL">CABEZAL</option>
+                <option value="OTAWA">OTAWA</option>
+              </select>
               <div className={styles.modalActions}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowCabezalModal(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary">Añadir</button>
