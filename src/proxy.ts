@@ -45,8 +45,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.nextUrl));
   }
 
-  // Si la ruta es de admin (usuarios, transportistas, tarifario), asegurar que el usuario sea ADMIN
-  const isAdminRoute = path.startsWith('/usuarios') || path.startsWith('/transportistas') || path.startsWith('/tarifario');
+  // Si la ruta es de admin (usuarios, tarifario), asegurar que el usuario sea ADMIN
+  const isAdminRoute = path.startsWith('/usuarios') || path.startsWith('/tarifario');
   if (isAdminRoute && session?.role !== 'ADMIN') {
     return NextResponse.redirect(new URL('/', request.nextUrl));
   }
