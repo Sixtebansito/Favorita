@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { lookupPreciosMultiple, registrarGuia, getGuiasDeLaSemana, cerrarSemanaGlobal, eliminarGuiaActiva, actualizarValorGuiaActiva, addPrecioToTarifario } from './actions';
+import { lookupPreciosMultiple, registrarGuia, getGuiasDeLaSemana, cerrarSemanaGlobal, eliminarGuiaActiva, actualizarValorGuiaActiva, addPrecioToTarifario, recalcularPreciosGuiasActivas } from './actions';
 import styles from './registro.module.css';
 
-export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) {
+export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cabezales: any[], ultimoTarifario?: any }) {
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [cabezalId, setCabezalId] = useState('');
   
@@ -33,6 +33,14 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
   const [addingPrecio, setAddingPrecio] = useState(false);
 
   const [success, setSuccess] = useState<boolean>(false);
+
+  // Estados para sincronización masiva de precios
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncFecha, setSyncFecha] = useState(new Date().toISOString().split('T')[0]);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Estados para notificación global de nuevo tarifario
+  const [showTarifarioNotification, setShowTarifarioNotification] = useState(false);
 
   // Derivar transportistas únicos de la lista de cabezales
   const transportistasUnicos = Array.from(new Set(cabezales.map(c => c.transportistaId))).map(
@@ -68,14 +76,64 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
 
   const fetchGuiasSemana = async () => {
     setCargandoGuias(true);
-    const data = await getGuiasDeLaSemana();
-    setGuiasSemana(data);
-    setCargandoGuias(false);
+    getGuiasDeLaSemana().then(data => {
+      setGuiasSemana(data);
+      setCargandoGuias(false);
+    });
+  };
+
+  const handleSyncPrecios = async () => {
+    if (!syncFecha) return;
+    setIsSyncing(true);
+    const result = await recalcularPreciosGuiasActivas(syncFecha, transportistaId || undefined);
+    setIsSyncing(false);
+    
+    if (result.error) {
+      alert("Error al sincronizar: " + result.error);
+    } else {
+      alert(`Sincronización exitosa. Se actualizaron ${result.count} guías.`);
+      setShowSyncModal(false);
+      fetchGuiasSemana();
+    }
   };
 
   useEffect(() => {
     fetchGuiasSemana();
   }, []);
+
+  useEffect(() => {
+    if (ultimoTarifario) {
+      const isDismissed = localStorage.getItem(`tarifario_sync_dismissed_${ultimoTarifario.id}`);
+      if (!isDismissed) {
+        const fechaObj = new Date(ultimoTarifario.fecha_vigencia);
+        const formattedDate = fechaObj.toISOString().split('T')[0];
+        setSyncFecha(formattedDate);
+        setShowTarifarioNotification(true);
+      }
+    }
+  }, [ultimoTarifario]);
+
+  const handleGlobalSyncResponse = async (accept: boolean) => {
+    if (accept) {
+      setIsSyncing(true);
+      const result = await recalcularPreciosGuiasActivas(syncFecha);
+      setIsSyncing(false);
+      
+      if (result.error) {
+        alert("Error al sincronizar: " + result.error);
+        return; // No guardamos dismiss en caso de error
+      } else {
+        alert(`Sincronización exitosa. Se actualizaron ${result.count} guías en total.`);
+        fetchGuiasSemana();
+      }
+    }
+    
+    // Guardar en localStorage para no mostrarlo de nuevo
+    if (ultimoTarifario) {
+      localStorage.setItem(`tarifario_sync_dismissed_${ultimoTarifario.id}`, 'true');
+    }
+    setShowTarifarioNotification(false);
+  };
 
   const handleAddCodigo = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -529,6 +587,13 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button 
+              onClick={() => setShowSyncModal(true)} 
+              className="btn btn-secondary"
+              title="Recalcular el precio de las guías activas basándose en el tarifario actual"
+            >
+              Sincronizar Precios
+            </button>
+            <button 
               onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')} 
               className="btn btn-secondary"
             >
@@ -807,6 +872,61 @@ export default function RegistroGuiaClient({ cabezales }: { cabezales: any[] }) 
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showSyncModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999
+        }}>
+          <div className="card" style={{ padding: '2rem', width: '90%', maxWidth: '400px', backgroundColor: 'var(--card)' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 600 }}>Sincronizar Precios</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '1rem' }}>
+              Esta acción actualizará el <strong>Valor Base</strong> y el <strong>Ticket</strong> de todas las guías Activas (sin cuadrar) a partir de la fecha que elijas, utilizando los precios actuales de la base de datos.
+            </p>
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label>Aplicar a guías desde:</label>
+              <input 
+                type="date" 
+                className="form-input" 
+                value={syncFecha}
+                onChange={e => setSyncFecha(e.target.value)}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button className="btn btn-secondary" onClick={() => setShowSyncModal(false)} disabled={isSyncing}>Cancelar</button>
+              <button className="btn btn-primary" onClick={handleSyncPrecios} disabled={isSyncing}>
+                {isSyncing ? 'Sincronizando...' : 'Confirmar Sincronización'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showTarifarioNotification && ultimoTarifario && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999
+        }}>
+          <div className="card" style={{ padding: '2rem', width: '90%', maxWidth: '450px', backgroundColor: 'var(--card)' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 600 }}>¡Nueva Tabla de Valores!</h3>
+            <p style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
+              Se ha subido una nueva tabla de valores (<strong>{ultimoTarifario.nombre}</strong>). 
+            </p>
+            <p style={{ fontSize: '0.95rem', marginBottom: '1.5rem', color: 'var(--muted-foreground)' }}>
+              ¿Quieres actualizar los valores de tus guías actuales? La tabla nueva rige desde las guías con fecha <strong>{new Date(ultimoTarifario.fecha_vigencia).toLocaleDateString('es-ES')}</strong>.
+            </p>
+            
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button className="btn btn-secondary" onClick={() => handleGlobalSyncResponse(false)} disabled={isSyncing}>
+                No, gracias
+              </button>
+              <button className="btn btn-primary" onClick={() => handleGlobalSyncResponse(true)} disabled={isSyncing}>
+                {isSyncing ? 'Actualizando...' : 'Sí, actualizar guías'}
+              </button>
+            </div>
           </div>
         </div>
       )}

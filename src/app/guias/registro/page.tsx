@@ -24,6 +24,10 @@ export default async function RegistroGuiasPage() {
     }
   });
 
+  const ultimoTarifario = await prisma.tarifario.findFirst({
+    orderBy: { createdAt: 'desc' }
+  });
+
   return (
     <div className="page-container">
       <header className="page-header" style={{ marginBottom: '2rem' }}>
@@ -31,7 +35,7 @@ export default async function RegistroGuiasPage() {
         <p style={{ color: 'var(--muted-foreground)', marginTop: '0.5rem' }}>Ingresa una nueva guía de transporte. El sistema asignará el valor automáticamente basado en la fecha.</p>
       </header>
 
-      <RegistroGuiaClient cabezales={cabezales} />
+      <RegistroGuiaClient cabezales={cabezales} ultimoTarifario={ultimoTarifario} />
     </div>
   );
 }

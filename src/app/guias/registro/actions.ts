@@ -260,6 +260,68 @@ export async function cerrarSemanaGlobal(transportistaIdFiltro?: string) {
   }
 }
 
+export async function recalcularPreciosGuiasActivas(fechaInicioStr: string, transportistaId?: string) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
+  try {
+    const fechaInicio = new Date(fechaInicioStr);
+    
+    // Buscar guías activas (sin cierre ni liquidación) desde la fecha indicada
+    const whereClause: any = {
+      fecha_guia: { gte: fechaInicio },
+      cierreSemanaId: null,
+      liquidacionId: null
+    };
+
+    if (transportistaId) {
+      whereClause.transportistaId = transportistaId;
+    }
+
+    const guiasActivas = await prisma.guia.findMany({
+      where: whereClause,
+      include: {
+        guiaPrecio: true
+      }
+    });
+
+    let actualizadas = 0;
+
+    for (const guia of guiasActivas) {
+      if (!guia.guiaPrecioId) continue;
+      
+      // Obtener el precio actual de la BD
+      const precioObj = await prisma.precio.findUnique({
+        where: { id: guia.guiaPrecioId }
+      });
+      
+      if (!precioObj) continue;
+
+      const nuevoValorBase = precioObj.valor;
+      let nuevoValorTicket = 0;
+      
+      if (nuevoValorBase <= 100) {
+        if (nuevoValorBase >= 35 && nuevoValorBase <= 50) nuevoValorTicket = 2;
+        else if (nuevoValorBase > 50 && nuevoValorBase <= 75) nuevoValorTicket = 4;
+        else if (nuevoValorBase > 75 && nuevoValorBase <= 100) nuevoValorTicket = 8;
+      }
+
+      await prisma.guia.update({
+        where: { id: guia.id },
+        data: {
+          valor_base_cobrado: nuevoValorBase,
+          valor_ticket: nuevoValorTicket,
+        }
+      });
+      actualizadas++;
+    }
+
+    return { success: true, count: actualizadas };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
 export async function eliminarGuiaActiva(guiaId: string) {
   const session = await getUserSession();
   if (!session) return { error: 'No autorizado' };
