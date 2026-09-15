@@ -291,7 +291,7 @@ export async function recalcularPreciosGuiasActivas(fechaInicioStr: string, tran
       if (!guia.guiaPrecioId) continue;
       
       // Obtener el precio actual de la BD
-      const precioObj = await prisma.precio.findUnique({
+      const precioObj = await prisma.guiaPrecio.findUnique({
         where: { id: guia.guiaPrecioId }
       });
       
