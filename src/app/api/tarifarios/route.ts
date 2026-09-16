@@ -107,6 +107,35 @@ export async function POST(req: NextRequest) {
         preciosCreados++;
       }
 
+      // Migrar los códigos personalizados del tarifario anterior (si lo hay)
+      const previousTarifario = await tx.tarifario.findFirst({
+        where: { id: { not: nuevoTarifario.id } },
+        orderBy: { fecha_vigencia: 'desc' }
+      });
+
+      if (previousTarifario) {
+        const customCodes = await tx.guiaPrecio.findMany({
+          where: {
+            tarifarioId: previousTarifario.id,
+            userId: { not: null }
+          }
+        });
+
+        for (const customCode of customCodes) {
+          await tx.guiaPrecio.create({
+            data: {
+              tarifarioId: nuevoTarifario.id,
+              userId: customCode.userId,
+              codigo: customCode.codigo,
+              tipo: customCode.tipo,
+              descripcion: customCode.descripcion,
+              valor: customCode.valor
+            }
+          });
+          preciosCreados++;
+        }
+      }
+
       return { tarifario: nuevoTarifario, count: preciosCreados };
     });
 

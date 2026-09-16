@@ -50,6 +50,7 @@ model Cabezal {
   transportista   Transportista @relation(fields: [transportistaId], references: [id], onDelete: Cascade)
   guias           Guia[]
   gastos          Gasto[]
+  mantenimientos  MantenimientoCabezal[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 }
@@ -184,6 +185,19 @@ model CierreMesGasto {
   mes_referencia  String        // ej: "Agosto 2026"
   total           Float
   gastos          Gasto[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model MantenimientoCabezal {
+  id              String        @id @default(cuid())
+  cabezalId       String
+  cabezal         Cabezal       @relation(fields: [cabezalId], references: [id], onDelete: Cascade)
+  fecha           DateTime
+  tipo            String        // Ej: "Cambio de aceite", "Llantas", "Frenos"
+  descripcion     String?       // Detalles adicionales
+  kilometraje     Int?
+  costo           Float?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 }
