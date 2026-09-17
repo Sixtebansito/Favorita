@@ -86,10 +86,10 @@ export default function GastosClient({
       setIsLoading(true);
       if (transportistaId) {
         const resGastos = await obtenerGastos(transportistaId);
-        if (resGastos.success) setGastos(resGastos.gastos);
+        if (resGastos.success && resGastos.gastos) setGastos(resGastos.gastos);
         
         const resCierres = await obtenerCierresMensuales(transportistaId);
-        if (resCierres.success) setCierres(resCierres.cierres);
+        if (resCierres.success && resCierres.cierres) setCierres(resCierres.cierres);
 
         const resReporte = await obtenerReporteGastos(transportistaId);
         setReporte(resReporte);
