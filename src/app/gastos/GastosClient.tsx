@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { registrarGasto, eliminarGasto, cerrarGastosMensuales, obtenerGastos, obtenerCierresMes, cerrarMesGastos, obtenerReporteGastos } from './actions';
+import { registrarGasto, eliminarGasto, cerrarGastosMensuales, obtenerGastos, obtenerCierresMensuales, obtenerReporteGastos } from './actions';
 import { Wallet, Truck, Calendar, Tag, DollarSign, Trash2, Loader2, AlertCircle, Users, BarChart3, Archive, CreditCard, Save } from 'lucide-react';
 
 type Cabezal = {
@@ -88,7 +88,7 @@ export default function GastosClient({
         const resGastos = await obtenerGastos(transportistaId);
         if (resGastos.success) setGastos(resGastos.gastos);
         
-        const resCierres = await obtenerCierresMes(transportistaId);
+        const resCierres = await obtenerCierresMensuales(transportistaId);
         if (resCierres.success) setCierres(resCierres.cierres);
 
         const resReporte = await obtenerReporteGastos(transportistaId);
