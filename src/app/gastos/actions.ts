@@ -44,6 +44,47 @@ export async function eliminarGasto(id: string) {
   }
 }
 
+export async function obtenerReporteGastos(transportistaId: string) {
+  try {
+    const ultimaLiquidacion = await prisma.liquidacion.findFirst({
+      where: { transportistaId },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const totalLiquidacionesAggr = await prisma.liquidacion.aggregate({
+      where: { transportistaId },
+      _sum: { total_pagado: true }
+    });
+
+    const totalGastosAggr = await prisma.gasto.aggregate({
+      where: { transportistaId },
+      _sum: { valor: true }
+    });
+
+    const totalGastosActivosAggr = await prisma.gasto.aggregate({
+      where: { transportistaId, estado: 'ACTIVO' },
+      _sum: { valor: true }
+    });
+
+    const totalCierresGastosAggr = await prisma.cierreMesGasto.aggregate({
+      where: { transportistaId },
+      _sum: { total: true }
+    });
+
+    return {
+      ultimaLiquidacion: ultimaLiquidacion?.total_pagado || 0,
+      fechaUltimaLiquidacion: ultimaLiquidacion?.fecha_fin || null,
+      globalLiquidado: totalLiquidacionesAggr._sum.total_pagado || 0,
+      gastosActivos: totalGastosActivosAggr._sum.valor || 0,
+      gastosHistoricos: totalCierresGastosAggr._sum.total || 0,
+      gastosTotales: (totalGastosActivosAggr._sum.valor || 0) + (totalCierresGastosAggr._sum.total || 0)
+    };
+  } catch (error) {
+    console.error('Error al obtener reporte:', error);
+    return null;
+  }
+}
+
 export async function obtenerGastos(transportistaId?: string) {
   try {
     const whereClause = transportistaId ? { transportistaId } : {};

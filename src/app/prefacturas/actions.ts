@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { getUserSession } from '../actions/auth';
 
-export async function generarPrefactura(transportistaId: string, fechaInicio: string, fechaFin: string, incluirActivas: boolean = false) {
+export async function generarPrefactura(transportistaId: string, fechaInicio: string, fechaFin: string, incluirActivas: boolean = false, cabezalId?: string) {
   const session = await getUserSession();
   if (!session) return { error: 'No autorizado' };
 
@@ -18,7 +18,10 @@ export async function generarPrefactura(transportistaId: string, fechaInicio: st
         gte: start,
         lte: end
       },
-      cabezal: {
+      cabezal: cabezalId ? {
+        id: cabezalId,
+        transportistaId: transportistaId
+      } : {
         transportistaId: transportistaId
       },
       estado: {

@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx';
 
 export default function PrefacturaClient({ transportistas }: { transportistas: any[] }) {
   const [transportistaId, setTransportistaId] = useState('');
+  const [cabezalId, setCabezalId] = useState('');
   
   // Calcular fecha de hace un mes
   const dateObj = new Date();
@@ -22,12 +23,15 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
   const [loading, setLoading] = useState(false);
   const [liquidando, setLiquidando] = useState(false);
 
+  const selectedTransportistaData = transportistas.find(t => t.id === transportistaId);
+  const cabezalesDisponibles = selectedTransportistaData?.cabezales || [];
+
   const handleGenerar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!transportistaId || !fechaInicio || !fechaFin) return;
     
     setLoading(true);
-    const data = await generarPrefactura(transportistaId, fechaInicio, fechaFin, incluirActivas);
+    const data = await generarPrefactura(transportistaId, fechaInicio, fechaFin, incluirActivas, cabezalId || undefined);
     setReporte(data);
     setLoading(false);
   };
@@ -176,10 +180,20 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
       <form onSubmit={handleGenerar} className={styles.filters}>
         <div className={styles.formGroup}>
           <label>Transportista</label>
-          <select value={transportistaId} onChange={e => setTransportistaId(e.target.value)} required>
+          <select value={transportistaId} onChange={e => { setTransportistaId(e.target.value); setCabezalId(''); }} required>
             <option value="">Seleccione un transportista</option>
             {transportistas.map(t => (
               <option key={t.id} value={t.id}>{t.name} ({t.ruc})</option>
+            ))}
+          </select>
+        </div>
+        
+        <div className={styles.formGroup}>
+          <label>Cabezal / Placa (Opcional)</label>
+          <select value={cabezalId} onChange={e => setCabezalId(e.target.value)} disabled={!transportistaId || cabezalesDisponibles.length === 0}>
+            <option value="">Todos los cabezales</option>
+            {cabezalesDisponibles.map((c: any) => (
+              <option key={c.id} value={c.id}>{c.placa} ({c.tipo})</option>
             ))}
           </select>
         </div>

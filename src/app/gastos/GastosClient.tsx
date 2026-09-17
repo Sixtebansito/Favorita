@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { registrarGasto, eliminarGasto, cerrarGastosMensuales } from './actions';
-import { Wallet, Truck, Calendar, Tag, DollarSign, Trash2, Loader2, AlertCircle, Users, BarChart3, Archive } from 'lucide-react';
+import { registrarGasto, eliminarGasto, cerrarGastosMensuales, obtenerGastos, obtenerCierresMes, cerrarMesGastos, obtenerReporteGastos } from './actions';
+import { Wallet, Truck, Calendar, Tag, DollarSign, Trash2, Loader2, AlertCircle, Users, BarChart3, Archive, CreditCard, Save } from 'lucide-react';
 
 type Cabezal = {
   id: string;
@@ -76,8 +76,33 @@ export default function GastosClient({
   const [concepto, setConcepto] = useState('Combustible');
   const [valor, setValor] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  
+  const [reporte, setReporte] = useState<any>(null);
 
   const selectedTransportista = transportistas.find(t => t.id === transportistaId);
+
+  useEffect(() => {
+    const cargarGastos = async () => {
+      setIsLoading(true);
+      if (transportistaId) {
+        const resGastos = await obtenerGastos(transportistaId);
+        if (resGastos.success) setGastos(resGastos.gastos);
+        
+        const resCierres = await obtenerCierresMes(transportistaId);
+        if (resCierres.success) setCierres(resCierres.cierres);
+
+        const resReporte = await obtenerReporteGastos(transportistaId);
+        setReporte(resReporte);
+      } else if (isAdmin) {
+        setGastos(gastosIniciales);
+        setCierres(cierresIniciales);
+        setReporte(null);
+      }
+      setIsLoading(false);
+    };
+
+    cargarGastos();
+  }, [transportistaId]);
 
   const totalGastos = gastos.reduce((sum, g) => sum + Number(g.valor), 0);
 
@@ -306,6 +331,59 @@ export default function GastosClient({
           </button>
         </form>
       </div>
+
+      {/* Reporte Final (Liquidación vs Gastos) */}
+      {reporte && selectedTransportista && (
+        <div className="card" style={{ padding: '1.5rem', backgroundColor: 'var(--card)', borderLeft: '4px solid var(--primary)' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <CreditCard size={20} />
+            Balance y Liquidación ({selectedTransportista.name})
+          </h2>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+            <div style={{ padding: '1.25rem', backgroundColor: '#f0fdf4', borderRadius: '0.5rem', border: '1px solid #bbf7d0' }}>
+              <span style={{ fontSize: '0.85rem', color: '#166534', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>ÚLTIMA LIQUIDACIÓN</span>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#15803d' }}>
+                ${reporte.ultimaLiquidacion.toFixed(2)}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#166534', marginTop: '0.25rem' }}>
+                {reporte.fechaUltimaLiquidacion ? `Hasta el ${new Date(reporte.fechaUltimaLiquidacion).toLocaleDateString()}` : 'Sin registros'}
+              </div>
+            </div>
+
+            <div style={{ padding: '1.25rem', backgroundColor: '#fef2f2', borderRadius: '0.5rem', border: '1px solid #fecaca' }}>
+              <span style={{ fontSize: '0.85rem', color: '#991b1b', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>GASTOS ACTIVOS</span>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#b91c1c' }}>
+                ${reporte.gastosActivos.toFixed(2)}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#991b1b', marginTop: '0.25rem' }}>
+                Gastos sin cerrar
+              </div>
+            </div>
+
+            <div style={{ padding: '1.25rem', backgroundColor: '#eff6ff', borderRadius: '0.5rem', border: '1px solid #bfdbfe' }}>
+              <span style={{ fontSize: '0.85rem', color: '#1e40af', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>BALANCE GLOBAL (HISTÓRICO)</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                  <span style={{ color: '#1e40af' }}>Total Liquidado:</span>
+                  <span style={{ fontWeight: 600, color: '#15803d' }}>${reporte.globalLiquidado.toFixed(2)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                  <span style={{ color: '#1e40af' }}>Total Gastos:</span>
+                  <span style={{ fontWeight: 600, color: '#b91c1c' }}>${reporte.gastosTotales.toFixed(2)}</span>
+                </div>
+                <div style={{ height: '1px', backgroundColor: '#bfdbfe', margin: '0.25rem 0' }}></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 700 }}>
+                  <span style={{ color: '#1e40af' }}>Balance Neto:</span>
+                  <span style={{ color: (reporte.globalLiquidado - reporte.gastosTotales) >= 0 ? '#15803d' : '#b91c1c' }}>
+                    ${(reporte.globalLiquidado - reporte.gastosTotales).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Monitorización y Historial */}
       <div className="card" style={{ padding: '1.5rem', backgroundColor: 'var(--card)' }}>
