@@ -377,3 +377,58 @@ export async function actualizarValorGuiaActiva(guiaId: string, nuevoValorBase: 
     return { error: error.message };
   }
 }
+
+export async function cambiarCodigoGuiaActiva(guiaId: string, nuevoCodigo: string) {
+  const session = await getUserSession();
+  if (!session) return { error: 'No autorizado' };
+
+  try {
+    const guia = await prisma.guia.findUnique({
+      where: { id: guiaId },
+    });
+
+    if (!guia) {
+      return { error: 'Guía no encontrada' };
+    }
+
+    const res = await lookupPreciosMultiple([nuevoCodigo], guia.fecha_guia.toISOString());
+    
+    if (res.error) {
+      return { error: res.error };
+    }
+
+    const precioNuevo = res.precio;
+    if (!precioNuevo) {
+      return { error: 'Precio no encontrado' };
+    }
+
+    const baseVal = precioNuevo.valor;
+    let ticket = 0;
+    
+    if (baseVal <= 100) {
+      const dest = precioNuevo.descripcion.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (['jardin', 'multicentro', 'colon', 'granados', 'america'].some(k => dest.includes(k))) {
+        ticket = 8;
+      } else if (dest.includes('plaza valle')) {
+        ticket = 4;
+      } else if (baseVal < 50) {
+        ticket = 2;
+      } else {
+        ticket = 4;
+      }
+    }
+
+    await prisma.guia.update({
+      where: { id: guiaId },
+      data: {
+        guiaPrecioId: precioNuevo.id,
+        valor_base_cobrado: baseVal,
+        valor_ticket: ticket,
+      }
+    });
+
+    return { success: true, base: baseVal, ticket: ticket, descripcion: precioNuevo.descripcion };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}

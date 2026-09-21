@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronRight, Pencil, Check, X, Loader2 } from 'lucide-react';
 import { updateTarifarioNombre, updatePrecioTarifario } from './actions';
 
-export default function TarifarioClient({ tarifarios }: { tarifarios: any[] }) {
+export default function TarifarioClient({ tarifarios, userRole }: { tarifarios: any[], userRole: string }) {
   const [file, setFile] = useState<File | null>(null);
   const [nombre, setNombre] = useState('');
   const [fecha, setFecha] = useState('');
@@ -145,13 +145,15 @@ export default function TarifarioClient({ tarifarios }: { tarifarios: any[] }) {
                     ) : (
                       <h3 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {tarifario.nombre}
-                        <button 
-                          type="button"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)' }} 
-                          onClick={(e) => { e.stopPropagation(); setEditingTarifarioId(tarifario.id); setEditTarifarioNombre(tarifario.nombre); }}
-                        >
-                          <Pencil size={14} />
-                        </button>
+                        {userRole === 'ADMIN' && (
+                          <button 
+                            type="button"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)' }} 
+                            onClick={(e) => { e.stopPropagation(); setEditingTarifarioId(tarifario.id); setEditTarifarioNombre(tarifario.nombre); }}
+                          >
+                            <Pencil size={14} />
+                          </button>
+                        )}
                         {tarifario.activo && (
                           <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '12px', backgroundColor: '#dcfce7', color: '#166534', fontWeight: 'bold' }}>
                             ACTIVO
@@ -179,7 +181,7 @@ export default function TarifarioClient({ tarifarios }: { tarifarios: any[] }) {
                               <th>Descripción / Destino</th>
                               <th>Tipo</th>
                               <th style={{ textAlign: 'right' }}>Valor Base</th>
-                              <th style={{ width: '80px', textAlign: 'center' }}>Acción</th>
+                              {userRole === 'ADMIN' && <th style={{ width: '80px', textAlign: 'center' }}>Acción</th>}
                             </tr>
                           </thead>
                           <tbody>
@@ -225,22 +227,24 @@ export default function TarifarioClient({ tarifarios }: { tarifarios: any[] }) {
                                     `$${precio.valor.toFixed(2)}`
                                   )}
                                 </td>
-                                <td style={{ textAlign: 'center' }}>
-                                  {editingPrecioId === precio.id ? (
-                                    <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
-                                      <button type="button" onClick={() => handleSavePrecio(precio.id)} disabled={isUpdating} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)' }}>
-                                        {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                                {userRole === 'ADMIN' && (
+                                  <td style={{ textAlign: 'center' }}>
+                                    {editingPrecioId === precio.id ? (
+                                      <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+                                        <button type="button" onClick={() => handleSavePrecio(precio.id)} disabled={isUpdating} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)' }}>
+                                          {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                                        </button>
+                                        <button type="button" onClick={() => setEditingPrecioId(null)} disabled={isUpdating} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)' }}>
+                                          <X size={16} />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <button type="button" onClick={() => { setEditingPrecioId(precio.id); setEditPrecioDescripcion(precio.descripcion); setEditPrecioValor(precio.valor); }} style={{ backgroundColor: '#ef4444', border: 'none', cursor: 'pointer', color: 'white', padding: '6px 10px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'background-color 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} title="Editar">
+                                        <Pencil size={14} />
                                       </button>
-                                      <button type="button" onClick={() => setEditingPrecioId(null)} disabled={isUpdating} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)' }}>
-                                        <X size={16} />
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <button type="button" onClick={() => { setEditingPrecioId(precio.id); setEditPrecioDescripcion(precio.descripcion); setEditPrecioValor(precio.valor); }} style={{ backgroundColor: '#ef4444', border: 'none', cursor: 'pointer', color: 'white', padding: '6px 10px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'background-color 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} title="Editar">
-                                      <Pencil size={14} />
-                                    </button>
-                                  )}
-                                </td>
+                                    )}
+                                  </td>
+                                )}
                               </tr>
                             ))}
                           </tbody>
@@ -260,108 +264,110 @@ export default function TarifarioClient({ tarifarios }: { tarifarios: any[] }) {
       </section>
 
       {/* Formulario de Subida */}
-      <section className="card" style={{ padding: '1.5rem', marginTop: '1rem' }}>
-        <div className="card-header" style={{ padding: '0 0 1.5rem 0' }}>
-          <h2 className="card-title" style={{ fontSize: '1.25rem' }}>Subir Nuevo Tarifario</h2>
-        </div>
-        
-        {message && (
-          <div style={{ 
-            padding: '1rem', 
-            borderRadius: 'var(--radius)', 
-            marginBottom: '1.5rem',
-            backgroundColor: message.type === 'success' ? '#dcfce7' : '#fee2e2',
-            color: message.type === 'success' ? '#166534' : '#991b1b',
-            border: `1px solid ${message.type === 'success' ? '#bbf7d0' : '#f87171'}`,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '0.875rem',
-            fontWeight: 500
-          }}>
-            {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
-            {message.text}
+      {userRole === 'ADMIN' && (
+        <section className="card" style={{ padding: '1.5rem', marginTop: '1rem' }}>
+          <div className="card-header" style={{ padding: '0 0 1.5rem 0' }}>
+            <h2 className="card-title" style={{ fontSize: '1.25rem' }}>Subir Nuevo Tarifario</h2>
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="form-group">
-            <label className="form-label" htmlFor="nombre">Nombre del Tarifario</label>
-            <input 
-              id="nombre"
-              type="text" 
-              className="form-input" 
-              placeholder="Ej. Valores Agosto 2024"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="fecha">Fecha de Inicio de Vigencia</label>
-            <input 
-              id="fecha"
-              type="date" 
-              className="form-input" 
-              value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
-              required
-            />
-            <p style={{ fontSize: '0.8rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>
-              Las guías registradas a partir de esta fecha usarán estos precios.
-            </p>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Archivo Excel (.xlsx, .xls)</label>
-            <div style={{
-              border: '2px dashed var(--border)',
-              borderRadius: 'var(--radius)',
-              padding: '2rem',
+          
+          {message && (
+            <div style={{ 
+              padding: '1rem', 
+              borderRadius: 'var(--radius)', 
+              marginBottom: '1.5rem',
+              backgroundColor: message.type === 'success' ? '#dcfce7' : '#fee2e2',
+              color: message.type === 'success' ? '#166534' : '#991b1b',
+              border: `1px solid ${message.type === 'success' ? '#bbf7d0' : '#f87171'}`,
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '1rem',
-              cursor: 'pointer',
-              backgroundColor: file ? 'var(--muted)' : 'transparent',
-              transition: 'background-color 0.2s ease, border-color 0.2s ease'
-            }}
-            onClick={() => document.getElementById('file-upload')?.click()}
-            >
-              <Upload size={32} color={file ? 'var(--primary)' : 'var(--muted-foreground)'} />
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontWeight: 500, color: 'var(--foreground)' }}>
-                  {file ? file.name : 'Haz clic para seleccionar el archivo Excel'}
-                </p>
-                {!file && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>El archivo debe contener columnas como: Código, Nombre, Valor, Tipo</p>}
-              </div>
+              gap: '0.5rem',
+              fontSize: '0.875rem',
+              fontWeight: 500
+            }}>
+              {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+              {message.text}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="nombre">Nombre del Tarifario</label>
               <input 
-                id="file-upload"
-                type="file" 
-                accept=".xlsx, .xls, .csv" 
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
+                id="nombre"
+                type="text" 
+                className="form-input" 
+                placeholder="Ej. Valores Agosto 2024"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                required
               />
             </div>
-          </div>
 
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
-            style={{ marginTop: '0.5rem', alignSelf: 'flex-start' }}
-            disabled={loading}
-          >
-            {loading ? 'Procesando...' : (
-              <>
-                <FileText size={18} />
-                Subir y Procesar Tarifario
-              </>
-            )}
-          </button>
-        </form>
-      </section>
+            <div className="form-group">
+              <label className="form-label" htmlFor="fecha">Fecha de Inicio de Vigencia</label>
+              <input 
+                id="fecha"
+                type="date" 
+                className="form-input" 
+                value={fecha}
+                onChange={(e) => setFecha(e.target.value)}
+                required
+              />
+              <p style={{ fontSize: '0.8rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>
+                Las guías registradas a partir de esta fecha usarán estos precios.
+              </p>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Archivo Excel (.xlsx, .xls)</label>
+              <div style={{
+                border: '2px dashed var(--border)',
+                borderRadius: 'var(--radius)',
+                padding: '2rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '1rem',
+                cursor: 'pointer',
+                backgroundColor: file ? 'var(--muted)' : 'transparent',
+                transition: 'background-color 0.2s ease, border-color 0.2s ease'
+              }}
+              onClick={() => document.getElementById('file-upload')?.click()}
+              >
+                <Upload size={32} color={file ? 'var(--primary)' : 'var(--muted-foreground)'} />
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontWeight: 500, color: 'var(--foreground)' }}>
+                    {file ? file.name : 'Haz clic para seleccionar el archivo Excel'}
+                  </p>
+                  {!file && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>El archivo debe contener columnas como: Código, Nombre, Valor, Tipo</p>}
+                </div>
+                <input 
+                  id="file-upload"
+                  type="file" 
+                  accept=".xlsx, .xls, .csv" 
+                  style={{ display: 'none' }}
+                  onChange={handleFileChange}
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              style={{ marginTop: '0.5rem', alignSelf: 'flex-start' }}
+              disabled={loading}
+            >
+              {loading ? 'Procesando...' : (
+                <>
+                  <FileText size={18} />
+                  Procesar Tarifario
+                </>
+              )}
+            </button>
+          </form>
+        </section>
+      )}
     </div>
   );
 }

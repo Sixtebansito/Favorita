@@ -19,7 +19,7 @@ export default function Sidebar({ user }: { user: any }) {
     { href: '/gastos', label: 'Gastos', icon: Wallet, show: true },
     { href: '/bitacora', label: 'Bitácora', icon: Wrench, show: true },
     { href: '/transportistas', label: 'Transportistas', icon: Truck, show: true },
-    { href: '/tarifario', label: 'Tarifarios Globales', icon: FileSpreadsheet, show: isAdmin },
+    { href: '/tarifario', label: 'Tarifarios Globales', icon: FileSpreadsheet, show: true },
     { href: '/mis-tarifarios', label: 'Mis Tarifarios', icon: FileSpreadsheet, show: !isAdmin },
     { href: '/usuarios', label: 'Usuarios', icon: Users, show: isAdmin },
     { href: '/base-de-datos', label: 'Base de Datos', icon: Settings, show: isAdmin },

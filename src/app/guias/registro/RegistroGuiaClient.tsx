@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { lookupPreciosMultiple, registrarGuia, getGuiasDeLaSemana, cerrarSemanaGlobal, eliminarGuiaActiva, actualizarValorGuiaActiva, addPrecioToTarifario, recalcularPreciosGuiasActivas } from './actions';
+import { lookupPreciosMultiple, registrarGuia, getGuiasDeLaSemana, cerrarSemanaGlobal, eliminarGuiaActiva, actualizarValorGuiaActiva, addPrecioToTarifario, recalcularPreciosGuiasActivas, cambiarCodigoGuiaActiva } from './actions';
 import styles from './registro.module.css';
 
 export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cabezales: any[], ultimoTarifario?: any }) {
@@ -73,6 +73,29 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
   const [groupEdits, setGroupEdits] = useState<Record<string, any>>({});
   const [savingActiva, setSavingActiva] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Estados para cambiar el código
+  const [editingCodigoId, setEditingCodigoId] = useState<string | null>(null);
+  const [nuevoCodigoGuia, setNuevoCodigoGuia] = useState<string>('');
+  const [savingCodigo, setSavingCodigo] = useState<boolean>(false);
+
+  const handleGuardarNuevoCodigo = async (guiaId: string) => {
+    if (!nuevoCodigoGuia.trim()) {
+      alert("Por favor ingresa un código.");
+      return;
+    }
+    setSavingCodigo(true);
+    const res = await cambiarCodigoGuiaActiva(guiaId, nuevoCodigoGuia.trim().toUpperCase());
+    setSavingCodigo(false);
+
+    if (res.error) {
+      alert("Error: " + res.error);
+    } else {
+      alert(`Código actualizado correctamente a ${nuevoCodigoGuia.trim().toUpperCase()}. Precio base: $${res.base}, Ticket: $${res.ticket}.`);
+      setEditingCodigoId(null);
+      fetchGuiasSemana();
+    }
+  };
 
   const fetchGuiasSemana = async () => {
     setCargandoGuias(true);
@@ -687,7 +710,43 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
                           return (
                             <tr key={guia.id} style={isEditing ? { backgroundColor: 'var(--accent)' } : {}}>
                               <td className={editingGroupId !== placa ? "mobile-hidden" : ""}>
-                                <span className="badge badge-secondary">{guia.codigos_evaluados}</span>
+                                {editingCodigoId === guia.id ? (
+                                  <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                                    <input 
+                                      type="text" 
+                                      className="form-input" 
+                                      value={nuevoCodigoGuia} 
+                                      onChange={(e) => setNuevoCodigoGuia(e.target.value.toUpperCase())}
+                                      style={{ width: '80px', padding: '0.25rem', fontSize: '0.75rem', height: '2rem' }}
+                                    />
+                                    <button 
+                                      onClick={() => handleGuardarNuevoCodigo(guia.id)}
+                                      disabled={savingCodigo}
+                                      className="btn btn-primary"
+                                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: '2rem' }}
+                                    >
+                                      {savingCodigo ? '...' : '✓'}
+                                    </button>
+                                    <button 
+                                      onClick={() => setEditingCodigoId(null)}
+                                      className="btn btn-secondary"
+                                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: '2rem' }}
+                                    >
+                                      x
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <span className="badge badge-secondary">{guia.codigos_evaluados}</span>
+                                    <button 
+                                      onClick={() => { setEditingCodigoId(guia.id); setNuevoCodigoGuia(guia.codigos_evaluados); }}
+                                      style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.875rem' }}
+                                      title="Cambiar código y recalcular"
+                                    >
+                                      ✎
+                                    </button>
+                                  </div>
+                                )}
                               </td>
                               {editingGroupId === placa && (
                                 <td>
