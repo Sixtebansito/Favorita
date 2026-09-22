@@ -37,7 +37,7 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
   useEffect(() => {
     if (cabezalesDisponibles.length === 1 && !cabezalId) {
       setCabezalId(cabezalesDisponibles[0].id);
-    } else if (cabezalesDisponibles.length === 0 || !cabezalesDisponibles.find(c => c.id === cabezalId)) {
+    } else if (cabezalesDisponibles.length === 0 || !cabezalesDisponibles.find((c: any) => c.id === cabezalId)) {
       setCabezalId('');
     }
   }, [cabezalesDisponibles, cabezalId]);  

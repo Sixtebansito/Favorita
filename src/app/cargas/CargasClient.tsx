@@ -19,11 +19,11 @@ export default function CargasClient({ cabezales }: { cabezales: any[] }) {
     valor: 0
   });
 
-  const transportistasUnicos = Array.from(new Set(cabezales.map(c => c.transportistaId))).map(
-    id => cabezales.find(c => c.transportistaId === id)!.transportista
+  const transportistasUnicos = Array.from(new Set(cabezales.map((c: any) => c.transportistaId))).map(
+    id => cabezales.find((c: any) => c.transportistaId === id)!.transportista
   );
 
-  const cabezalesFiltrados = cabezales.filter(c => c.transportistaId === transportistaId);
+  const cabezalesFiltrados = cabezales.filter((c: any) => c.transportistaId === transportistaId);
 
   // Auto-seleccionar transportista si solo hay 1
   useEffect(() => {
@@ -36,7 +36,7 @@ export default function CargasClient({ cabezales }: { cabezales: any[] }) {
   useEffect(() => {
     if (cabezalesFiltrados.length === 1 && !formData.cabezalId) {
       setFormData(prev => ({ ...prev, cabezalId: cabezalesFiltrados[0].id }));
-    } else if (cabezalesFiltrados.length === 0 || !cabezalesFiltrados.find(c => c.id === formData.cabezalId)) {
+    } else if (cabezalesFiltrados.length === 0 || !cabezalesFiltrados.find((c: any) => c.id === formData.cabezalId)) {
       setFormData(prev => ({ ...prev, cabezalId: '' }));
     }
   }, [cabezalesFiltrados, formData.cabezalId]);
