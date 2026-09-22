@@ -41,6 +41,18 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
       setCabezalId('');
     }
   }, [cabezalesDisponibles, cabezalId]);  
+  const today = new Date().toISOString().split('T')[0];
+  const [fechaInicio, setFechaInicio] = useState(unMesAntes);
+  const [fechaFin, setFechaFin] = useState(today);
+  const [incluirActivas, setIncluirActivas] = useState(false);
+  
+  const [reporte, setReporte] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [liquidando, setLiquidando] = useState(false);
+
+  const selectedTransportistaData = transportistas.find(t => t.id === transportistaId);
+  const cabezalesDisponibles = selectedTransportistaData?.cabezales || [];
+
   const handleGenerar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!transportistaId || !fechaInicio || !fechaFin) return;

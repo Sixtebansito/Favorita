@@ -8,7 +8,8 @@ export default function CargasClient({ cabezales }: { cabezales: any[] }) {
   const [cargas, setCargas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const [transportistaId, setTransportistaId] = useState<string>('');
 
   const [formData, setFormData] = useState({
     cabezalId: '',
@@ -17,6 +18,28 @@ export default function CargasClient({ cabezales }: { cabezales: any[] }) {
     cantidad: 1,
     valor: 0
   });
+
+  const transportistasUnicos = Array.from(new Set(cabezales.map(c => c.transportistaId))).map(
+    id => cabezales.find(c => c.transportistaId === id)!.transportista
+  );
+
+  const cabezalesFiltrados = cabezales.filter(c => c.transportistaId === transportistaId);
+
+  // Auto-seleccionar transportista si solo hay 1
+  useEffect(() => {
+    if (transportistasUnicos.length === 1 && !transportistaId) {
+      setTransportistaId(transportistasUnicos[0].id);
+    }
+  }, [transportistasUnicos, transportistaId]);
+
+  // Auto-seleccionar cabezal o limpiar si cambias de transportista
+  useEffect(() => {
+    if (cabezalesFiltrados.length === 1 && !formData.cabezalId) {
+      setFormData(prev => ({ ...prev, cabezalId: cabezalesFiltrados[0].id }));
+    } else if (cabezalesFiltrados.length === 0 || !cabezalesFiltrados.find(c => c.id === formData.cabezalId)) {
+      setFormData(prev => ({ ...prev, cabezalId: '' }));
+    }
+  }, [cabezalesFiltrados, formData.cabezalId]);
 
   useEffect(() => {
     cargarDatos();
@@ -34,11 +57,10 @@ export default function CargasClient({ cabezales }: { cabezales: any[] }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.cabezalId) {
-      setMessage({ text: 'Por favor selecciona un cabezal', type: 'error' });
+      window.alert('Por favor selecciona un cabezal');
       return;
     }
     setIsSubmitting(true);
-    setMessage(null);
 
     const res = await registrarCarga({
       ...formData,
@@ -47,11 +69,11 @@ export default function CargasClient({ cabezales }: { cabezales: any[] }) {
     });
 
     if (res.success) {
-      setMessage({ text: 'Carga registrada exitosamente', type: 'success' });
+      window.alert('Carga registrada exitosamente');
       setFormData(prev => ({ ...prev, descripcion: '', valor: 0, cantidad: 1 }));
       cargarDatos();
     } else {
-      setMessage({ text: res.error || 'Error al registrar', type: 'error' });
+      window.alert(res.error || 'Error al registrar');
     }
     setIsSubmitting(false);
   };
@@ -72,24 +94,22 @@ export default function CargasClient({ cabezales }: { cabezales: any[] }) {
 
       <section className="card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
         <h2 className="card-title" style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Registrar Carga</h2>
-        
-        {message && (
-          <div style={{ 
-            padding: '1rem', 
-            borderRadius: 'var(--radius)', 
-            marginBottom: '1rem',
-            backgroundColor: message.type === 'success' ? '#dcfce7' : '#fee2e2',
-            color: message.type === 'success' ? '#166534' : '#991b1b',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
-            {message.text}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'end' }}>
+          <div className="form-group">
+            <label className="form-label">Transportista</label>
+            <select 
+              className="form-input" 
+              value={transportistaId}
+              onChange={e => setTransportistaId(e.target.value)}
+              required
+            >
+              <option value="">Seleccione compañía...</option>
+              {transportistasUnicos.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
           <div className="form-group">
             <label className="form-label">Cabezal</label>
             <select 
@@ -97,10 +117,11 @@ export default function CargasClient({ cabezales }: { cabezales: any[] }) {
               value={formData.cabezalId}
               onChange={e => setFormData({...formData, cabezalId: e.target.value})}
               required
+              disabled={!transportistaId}
             >
-              <option value="">Seleccione un cabezal...</option>
-              {cabezales.map(c => (
-                <option key={c.id} value={c.id}>{c.placa} - {c.transportista.name}</option>
+              <option value="">Seleccione cabezal...</option>
+              {cabezalesFiltrados.map(c => (
+                <option key={c.id} value={c.id}>{c.placa} ({c.tipo || 'CABEZAL'})</option>
               ))}
             </select>
           </div>
