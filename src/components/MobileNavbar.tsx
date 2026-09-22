@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, FileText, FileSpreadsheet, Truck, Users, Settings, LogOut, Menu, X, Wallet, Wrench } from 'lucide-react';
+import { Home, FileText, FileSpreadsheet, Truck, Users, Settings, LogOut, Menu, X, Wallet, Wrench, Package } from 'lucide-react';
 import { logout } from '@/app/actions/auth';
 import { useState, useEffect } from 'react';
 
@@ -26,6 +26,7 @@ export default function MobileNavbar({ user }: { user: any }) {
   const moreNavItems = [
     { href: '/gastos', label: 'Gastos', icon: Wallet, show: true },
     { href: '/bitacora', label: 'Bitácora', icon: Wrench, show: true },
+    { href: '/cargas', label: 'Cargas', icon: Package, show: true },
     { href: '/transportistas', label: 'Transportistas', icon: Truck, show: true },
     { href: '/tarifario', label: 'Tarifarios Globales', icon: FileSpreadsheet, show: true },
     { href: '/mis-tarifarios', label: 'Mis Tarifarios', icon: FileSpreadsheet, show: !isAdmin },

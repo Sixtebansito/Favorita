@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Truck, FileText, Settings, Users, FileSpreadsheet, LogOut, Wallet, Wrench } from 'lucide-react';
+import { Home, Truck, FileText, Settings, Users, FileSpreadsheet, LogOut, Wallet, Wrench, Package } from 'lucide-react';
 import { logout } from '@/app/actions/auth';
 import Image from 'next/image';
 
@@ -18,6 +18,7 @@ export default function Sidebar({ user }: { user: any }) {
     { href: '/prefacturas', label: 'Prefacturas', icon: FileSpreadsheet, show: true },
     { href: '/gastos', label: 'Gastos', icon: Wallet, show: true },
     { href: '/bitacora', label: 'Bitácora', icon: Wrench, show: true },
+    { href: '/cargas', label: 'Cargas', icon: Package, show: true },
     { href: '/transportistas', label: 'Transportistas', icon: Truck, show: true },
     { href: '/tarifario', label: 'Tarifarios Globales', icon: FileSpreadsheet, show: true },
     { href: '/mis-tarifarios', label: 'Mis Tarifarios', icon: FileSpreadsheet, show: !isAdmin },

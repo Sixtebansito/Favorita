@@ -180,6 +180,7 @@ export default function SemanasClient({ cierres, cabezales }: { cierres: any[], 
   };
 
   const granTotalSemanas = cierresFiltrados.reduce((acc, c) => acc + c.total, 0);
+  const granTotalTickets = cierresFiltrados.reduce((acc, c) => acc + (c.total_tickets || 0), 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -201,10 +202,10 @@ export default function SemanasClient({ cierres, cabezales }: { cierres: any[], 
 
       <div style={{ backgroundColor: 'var(--primary)', color: 'white', padding: '1rem', borderRadius: 'var(--radius)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Total Histórico de Liquidaciones</h3>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Total de Semanas Cuadradas</h3>
           <p style={{ margin: 0, opacity: 0.8, fontSize: '0.8rem', marginTop: '0.25rem' }}>Suma de las semanas mostradas</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <button 
             onClick={() => { setMergeMode(!mergeMode); setSelectedParaUnir([]); }}
             className="btn btn-secondary"
@@ -212,7 +213,16 @@ export default function SemanasClient({ cierres, cabezales }: { cierres: any[], 
           >
             {mergeMode ? 'Cancelar Unir' : 'Unir Semanas'}
           </button>
-          <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>${granTotalSemanas.toFixed(2)}</h2>
+          
+          <div style={{ textAlign: 'right', borderRight: '1px solid rgba(255,255,255,0.3)', paddingRight: '1.5rem' }}>
+            <span style={{ fontSize: '0.75rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tickets</span>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>${granTotalTickets.toFixed(2)}</h2>
+          </div>
+          
+          <div style={{ textAlign: 'right' }}>
+            <span style={{ fontSize: '0.75rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Semana</span>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>${granTotalSemanas.toFixed(2)}</h2>
+          </div>
         </div>
       </div>
 
