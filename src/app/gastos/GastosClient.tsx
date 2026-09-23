@@ -348,7 +348,7 @@ export default function GastosClient({
                 ${reporte.ultimaLiquidacion.toFixed(2)}
               </div>
               <div style={{ fontSize: '0.75rem', color: '#166534', marginTop: '0.25rem' }}>
-                {reporte.fechaUltimaLiquidacion ? `Hasta el ${new Date(reporte.fechaUltimaLiquidacion).toLocaleDateString()}` : 'Sin registros'}
+                {reporte.fechaUltimaLiquidacion ? `Hasta el ${new Date(reporte.fechaUltimaLiquidacion).toLocaleDateString('es-ES', { timeZone: 'UTC' })}` : 'Sin registros'}
               </div>
             </div>
 
@@ -460,7 +460,7 @@ export default function GastosClient({
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Calendar size={14} style={{ color: 'var(--muted-foreground)' }} />
-                        {new Date(gasto.fecha).toLocaleDateString()}
+                        {new Date(gasto.fecha).toLocaleDateString('es-ES', { timeZone: 'UTC' })}
                       </div>
                     </td>
                     <td>
@@ -542,7 +542,7 @@ export default function GastosClient({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                   <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.1rem' }}>{cierre.mes_referencia}</h3>
                   <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
-                    Cerrado: {new Date(cierre.fecha_cierre).toLocaleDateString()}
+                    Cerrado: {new Date(cierre.fecha_cierre).toLocaleDateString('es-ES', { timeZone: 'UTC' })}
                   </span>
                 </div>
                 <p style={{ fontSize: '0.85rem', color: 'var(--muted-foreground)', marginBottom: '1rem' }}>

@@ -38,7 +38,6 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
   // Estados para sincronización masiva de precios
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [syncFecha, setSyncFecha] = useState(new Date().toISOString().split('T')[0]);
-  const [syncTodosTransp, setSyncTodosTransp] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
 
   // Estados para notificación global de nuevo tarifario
@@ -110,11 +109,7 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
   const handleSyncPrecios = async () => {
     if (!syncFecha) return;
     setIsSyncing(true);
-    
-    // Si syncTodosTransp es true, no enviamos transportistaId (sincroniza todos).
-    const targetTransportista = syncTodosTransp ? undefined : (transportistaId || undefined);
-    const result = await recalcularPreciosGuiasActivas(syncFecha, targetTransportista);
-    
+    const result = await recalcularPreciosGuiasActivas(syncFecha, transportistaId || undefined);
     setIsSyncing(false);
     
     if (result.error) {
@@ -960,20 +955,6 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
                 onChange={e => setSyncFecha(e.target.value)}
               />
             </div>
-            
-            <div className="form-group" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input 
-                type="checkbox" 
-                id="syncTodos"
-                checked={syncTodosTransp}
-                onChange={e => setSyncTodosTransp(e.target.checked)}
-                style={{ width: 'auto', cursor: 'pointer' }}
-              />
-              <label htmlFor="syncTodos" style={{ margin: 0, cursor: 'pointer', userSelect: 'none' }}>
-                Sincronizar a TODOS los transportistas
-              </label>
-            </div>
-
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
               <button className="btn btn-secondary" onClick={() => setShowSyncModal(false)} disabled={isSyncing}>Cancelar</button>
               <button className="btn btn-primary" onClick={handleSyncPrecios} disabled={isSyncing}>

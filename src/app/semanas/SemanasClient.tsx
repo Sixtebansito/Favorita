@@ -455,7 +455,7 @@ export default function SemanasClient({ cierres, cabezales }: { cierres: any[], 
                                 </td>
                                 
                                 {/* Fecha */}
-                                <td className={!isGroupEditing ? "hidden md:table-cell" : ""}>{new Date(guia.fecha_guia).toLocaleDateString('es-ES')}</td>
+                                <td className={!isGroupEditing ? "hidden md:table-cell" : ""}>{new Date(guia.fecha_guia).toLocaleDateString('es-ES', { timeZone: 'UTC' })}</td>
 
                                 {/* Acciones */}
                                 <td style={{ textAlign: 'right' }}>

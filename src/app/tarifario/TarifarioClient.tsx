@@ -163,7 +163,7 @@ export default function TarifarioClient({ tarifarios, userRole }: { tarifarios: 
                       </h3>
                     )}
                     <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                      Vigente desde: {new Date(tarifario.fecha_vigencia).toLocaleDateString('es-ES')} | Registros: {tarifario.precios?.length || 0}
+                      Vigente desde: {new Date(tarifario.fecha_vigencia).toLocaleDateString('es-ES', { timeZone: 'UTC' })} | Registros: {tarifario.precios?.length || 0}
                     </p>
                   </div>
                   <div style={{ color: 'var(--muted-foreground)' }}>

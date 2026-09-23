@@ -247,7 +247,7 @@ export default function BitacoraClient({ transportistasIniciales }: { transporti
                       mantenimientos.map((m) => (
                         <tr key={m.id}>
                           <td>
-                            {new Date(m.fecha).toLocaleDateString('es-ES')}
+                            {new Date(m.fecha).toLocaleDateString('es-ES', { timeZone: 'UTC' })}
                           </td>
                           <td style={{ fontWeight: 600 }}>
                             {m.tipo}

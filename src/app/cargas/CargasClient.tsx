@@ -200,7 +200,7 @@ export default function CargasClient({ cabezales }: { cabezales: any[] }) {
               <tbody>
                 {cargas.map(carga => (
                   <tr key={carga.id}>
-                    <td>{new Date(carga.fecha).toLocaleDateString()}</td>
+                    <td>{new Date(carga.fecha).toLocaleDateString('es-ES', { timeZone: 'UTC' })}</td>
                     <td><span style={{ fontWeight: 600 }}>{carga.cabezal.placa}</span></td>
                     <td>{carga.descripcion}</td>
                     <td style={{ textAlign: 'right' }}>{carga.cantidad}</td>

@@ -274,8 +274,18 @@ export async function recalcularPreciosGuiasActivas(fechaInicioStr: string, tran
       liquidacionId: null
     };
 
+    const cabezalConditions: any = {};
     if (transportistaId) {
-      whereClause.transportistaId = transportistaId;
+      cabezalConditions.transportistaId = transportistaId;
+    }
+    if (session.role !== 'ADMIN') {
+      cabezalConditions.transportista = {
+        users: { some: { id: session.id } }
+      };
+    }
+
+    if (Object.keys(cabezalConditions).length > 0) {
+      whereClause.cabezal = cabezalConditions;
     }
 
     const guiasActivas = await prisma.guia.findMany({
