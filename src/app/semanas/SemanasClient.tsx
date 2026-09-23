@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { actualizarValorGuia, eliminarGuiaDeSemana } from './actions';
+import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
 export default function SemanasClient({ cierres, cabezales }: { cierres: any[], cabezales?: any[] }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -118,7 +119,7 @@ export default function SemanasClient({ cierres, cabezales }: { cierres: any[], 
     const res = await actualizarValoresMultiples(updates, cierreSemanaId);
     
     if (res.error) {
-      alert("Error al actualizar: " + res.error);
+      mostrarAlerta("Error al actualizar: " + res.error, 'error');
     } else {
       setEditingGroupId(null);
     }
@@ -126,11 +127,11 @@ export default function SemanasClient({ cierres, cabezales }: { cierres: any[], 
   };
 
   const handleDelete = async (guiaId: string, cierreSemanaId: string) => {
-    if (confirm("¿Estás seguro de que quieres eliminar esta guía de la semana? Volverá al registro principal (Sin Cuadrar).")) {
+    if (await confirmar("¿Estás seguro de que quieres eliminar esta guía de la semana? Volverá al registro principal (Sin Cuadrar).")) {
       setDeletingId(guiaId);
       const res = await eliminarGuiaDeSemana(guiaId, cierreSemanaId);
       if (res.error) {
-        alert("Error al eliminar: " + res.error);
+        mostrarAlerta("Error al eliminar: " + res.error, 'error');
       }
       setDeletingId(null);
     }
@@ -143,7 +144,7 @@ export default function SemanasClient({ cierres, cabezales }: { cierres: any[], 
       if (selectedParaUnir.length > 0) {
         const firstSelected = cierres.find(c => c.id === selectedParaUnir[0]);
         if (firstSelected?.transportistaId !== cierre.transportistaId) {
-          alert('Solo puedes unir semanas del mismo transportista.');
+          mostrarAlerta('Solo puedes unir semanas del mismo transportista.', 'info');
           return;
         }
       }
@@ -153,7 +154,7 @@ export default function SemanasClient({ cierres, cabezales }: { cierres: any[], 
 
   const handleUnirSemanas = async () => {
     if (selectedParaUnir.length < 2) return;
-    if (!confirm(`¿Estás seguro de unir estas ${selectedParaUnir.length} semanas?`)) return;
+    if (!await confirmar(`¿Estás seguro de unir estas ${selectedParaUnir.length} semanas?`)) return;
 
     setSaving(true);
     const { unirSemanas } = await import('./actions');
@@ -165,14 +166,14 @@ export default function SemanasClient({ cierres, cabezales }: { cierres: any[], 
       const secundario = selectedParaUnir[i];
       const res = await unirSemanas(primario, secundario);
       if (res.error) {
-        alert("Error al unir: " + res.error);
+        mostrarAlerta("Error al unir: " + res.error, 'error');
         hasError = true;
         break;
       }
     }
 
     if (!hasError) {
-      alert("Semanas unidas exitosamente.");
+      mostrarAlerta("Semanas unidas exitosamente.", 'success');
       setMergeMode(false);
       setSelectedParaUnir([]);
     }

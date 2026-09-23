@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { registrarGasto, eliminarGasto, cerrarGastosMensuales, obtenerGastos, obtenerCierresMensuales, obtenerReporteGastos } from './actions';
 import { Wallet, Truck, Calendar, Tag, DollarSign, Trash2, Loader2, AlertCircle, Users, BarChart3, Archive, CreditCard, Save } from 'lucide-react';
+import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
 type Cabezal = {
   id: string;
@@ -160,7 +161,7 @@ export default function GastosClient({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Está seguro de eliminar este gasto?')) return;
+    if (!await confirmar('¿Está seguro de eliminar este gasto?')) return;
     
     // Optimistic UI update
     const previous = [...gastos];
@@ -168,7 +169,7 @@ export default function GastosClient({
     
     const res = await eliminarGasto(id);
     if (!res.success) {
-      alert(res.error || 'Error al eliminar');
+      mostrarAlerta(res.error || 'Error al eliminar', 'error');
       setGastos(previous); // revert
     }
   };
@@ -185,10 +186,10 @@ export default function GastosClient({
       setShowCloseModal(false);
       setCierreMesNombre('');
       setCierreFechaHasta('');
-      alert('Mes cerrado con éxito.');
+      mostrarAlerta('Mes cerrado con éxito.', 'success');
       router.refresh();
     } else {
-      alert(res.error || 'Error al cerrar el mes.');
+      mostrarAlerta(res.error || 'Error al cerrar el mes.', 'error');
     }
   };
 

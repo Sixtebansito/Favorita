@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { registrarCarga, obtenerCargas, eliminarCarga } from './actions';
+import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
 export default function CargasClient({ cabezales }: { cabezales: any[] }) {
   const [cargas, setCargas] = useState<any[]>([]);
@@ -57,7 +58,7 @@ export default function CargasClient({ cabezales }: { cabezales: any[] }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.cabezalId) {
-      window.alert('Por favor selecciona un cabezal');
+      mostrarAlerta('Por favor selecciona un cabezal', 'info');
       return;
     }
     setIsSubmitting(true);
@@ -69,22 +70,22 @@ export default function CargasClient({ cabezales }: { cabezales: any[] }) {
     });
 
     if (res.success) {
-      window.alert('Carga registrada exitosamente');
+      mostrarAlerta('Carga registrada exitosamente', 'success');
       setFormData(prev => ({ ...prev, descripcion: '', valor: 0, cantidad: 1 }));
       cargarDatos();
     } else {
-      window.alert(res.error || 'Error al registrar');
+      mostrarAlerta(res.error || 'Error al registrar', 'error');
     }
     setIsSubmitting(false);
   };
 
   const handleEliminar = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta carga?')) return;
+    if (!await confirmar('¿Estás seguro de eliminar esta carga?')) return;
     const res = await eliminarCarga(id);
     if (res.success) {
       cargarDatos();
     } else {
-      alert(res.error || 'Error al eliminar');
+      mostrarAlerta(res.error || 'Error al eliminar', 'error');
     }
   };
 

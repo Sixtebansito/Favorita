@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronRight, Pencil, Check, X, Loader2 } from 'lucide-react';
 import { updateTarifarioNombre, updatePrecioTarifario } from './actions';
+import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
 export default function TarifarioClient({ tarifarios, userRole }: { tarifarios: any[], userRole: string }) {
   const [file, setFile] = useState<File | null>(null);
@@ -78,7 +79,7 @@ export default function TarifarioClient({ tarifarios, userRole }: { tarifarios: 
     if (res.success) {
       setEditingTarifarioId(null);
     } else {
-      alert(res.error || 'Error al actualizar');
+      mostrarAlerta(res.error || 'Error al actualizar', 'error');
     }
   };
 
@@ -90,7 +91,7 @@ export default function TarifarioClient({ tarifarios, userRole }: { tarifarios: 
     if (res.success) {
       setEditingPrecioId(null);
     } else {
-      alert(res.error || 'Error al actualizar precio');
+      mostrarAlerta(res.error || 'Error al actualizar precio', 'error');
     }
   };
 

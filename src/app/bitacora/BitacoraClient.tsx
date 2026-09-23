@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getMantenimientos, crearMantenimiento, eliminarMantenimiento } from './actions';
 import { Save, Loader2 } from 'lucide-react';
+import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
 export default function BitacoraClient({ transportistasIniciales }: { transportistasIniciales: any[] }) {
   const [transportistas] = useState(transportistasIniciales);
@@ -48,14 +49,14 @@ export default function BitacoraClient({ transportistasIniciales }: { transporti
     if (res.success) {
       setMantenimientos(res.mantenimientos);
     } else {
-      alert('Error al cargar la bitácora');
+      mostrarAlerta('Error al cargar la bitácora', 'error');
     }
     setIsLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCabezal) return alert('Selecciona un cabezal');
+    if (!selectedCabezal) return mostrarAlerta('Selecciona un cabezal', 'info');
 
     setIsSubmitting(true);
     const res = await crearMantenimiento({
@@ -68,7 +69,7 @@ export default function BitacoraClient({ transportistasIniciales }: { transporti
     });
 
     if (res.success) {
-      alert('Mantenimiento registrado');
+      mostrarAlerta('Mantenimiento registrado', 'info');
       setFormData({
         ...formData,
         descripcion: '',
@@ -77,20 +78,20 @@ export default function BitacoraClient({ transportistasIniciales }: { transporti
       });
       cargarMantenimientos(selectedCabezal);
     } else {
-      alert(res.error || 'Error al guardar');
+      mostrarAlerta(res.error || 'Error al guardar', 'error');
     }
     setIsSubmitting(false);
   };
 
   const handleEliminar = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar este registro?')) return;
+    if (!await confirmar('¿Estás seguro de eliminar este registro?')) return;
     
     const res = await eliminarMantenimiento(id);
     if (res.success) {
-      alert('Registro eliminado');
+      mostrarAlerta('Registro eliminado', 'info');
       cargarMantenimientos(selectedCabezal);
     } else {
-      alert('Error al eliminar');
+      mostrarAlerta('Error al eliminar', 'error');
     }
   };
 

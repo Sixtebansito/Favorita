@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { crearTransportista, crearCabezal, eliminarCabezal, asignarUsuarioATransportista, eliminarTransportista } from './actions';
 import styles from './transportista.module.css';
+import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
 export default function TransportistaClient({ 
   transportistas, 
@@ -64,16 +65,16 @@ export default function TransportistaClient({
   };
 
   const handleEliminarCabezal = async (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este cabezal?')) {
+    if (await confirmar('¿Estás seguro de eliminar este cabezal?')) {
       const res = await eliminarCabezal(id);
-      if (res.error) alert(res.error);
+      if (res.error) mostrarAlerta(res.error, 'error');
     }
   };
 
   const handleEliminarTransportista = async (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este transportista?\nEsta acción no se puede deshacer y solo es posible si no tiene datos asociados (cabezales, guías).')) {
+    if (await confirmar('¿Estás seguro de eliminar este transportista?\nEsta acción no se puede deshacer y solo es posible si no tiene datos asociados (cabezales, guías).')) {
       const res = await eliminarTransportista(id);
-      if (res.error) alert(res.error);
+      if (res.error) mostrarAlerta(res.error, 'error');
     }
   };
 
@@ -101,7 +102,7 @@ export default function TransportistaClient({
     const res = await getLiquidacionDetalle(liquidacionId);
     
     if (res.error || !res.reporte) {
-      alert("Error al obtener la liquidación: " + res.error);
+      mostrarAlerta("Error al obtener la liquidación: " + res.error, 'error');
       return;
     }
 

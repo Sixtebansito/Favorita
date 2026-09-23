@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { lookupPreciosMultiple, registrarGuia, getGuiasDeLaSemana, cerrarSemanaGlobal, eliminarGuiaActiva, actualizarValorGuiaActiva, addPrecioToTarifario, recalcularPreciosGuiasActivas, cambiarCodigoGuiaActiva } from './actions';
 import styles from './registro.module.css';
+import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
 export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cabezales: any[], ultimoTarifario?: any }) {
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -81,7 +82,7 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
 
   const handleGuardarNuevoCodigo = async (guiaId: string) => {
     if (!nuevoCodigoGuia.trim()) {
-      alert("Por favor ingresa un código.");
+      mostrarAlerta("Por favor ingresa un código.", 'info');
       return;
     }
     setSavingCodigo(true);
@@ -89,9 +90,9 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
     setSavingCodigo(false);
 
     if (res.error) {
-      alert("Error: " + res.error);
+      mostrarAlerta("Error: " + res.error, 'error');
     } else {
-      alert(`Código actualizado correctamente a ${nuevoCodigoGuia.trim().toUpperCase()}. Precio base: $${res.base}, Ticket: $${res.ticket}.`);
+      mostrarAlerta(`Código actualizado correctamente a ${nuevoCodigoGuia.trim().toUpperCase()}. Precio base: $${res.base}, Ticket: $${res.ticket}.`, 'success');
       setEditingCodigoId(null);
       fetchGuiasSemana();
     }
@@ -112,9 +113,9 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
     setIsSyncing(false);
     
     if (result.error) {
-      alert("Error al sincronizar: " + result.error);
+      mostrarAlerta("Error al sincronizar: " + result.error, 'error');
     } else {
-      alert(`Sincronización exitosa. Se actualizaron ${result.count} guías.`);
+      mostrarAlerta(`Sincronización exitosa. Se actualizaron ${result.count} guías.`, 'success');
       setShowSyncModal(false);
       fetchGuiasSemana();
     }
@@ -143,10 +144,10 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
       setIsSyncing(false);
       
       if (result.error) {
-        alert("Error al sincronizar: " + result.error);
+        mostrarAlerta("Error al sincronizar: " + result.error, 'error');
         return; // No guardamos dismiss en caso de error
       } else {
-        alert(`Sincronización exitosa. Se actualizaron ${result.count} guías en total.`);
+        mostrarAlerta(`Sincronización exitosa. Se actualizaron ${result.count} guías en total.`, 'success');
         fetchGuiasSemana();
       }
     }
@@ -244,10 +245,10 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
     setAddingPrecio(false);
     
     if (res.error) {
-      alert(res.error);
+      mostrarAlerta(res.error, 'error');
     } else {
       setShowAddCodigoModal(false);
-      alert('Código agregado exitosamente al tarifario.');
+      mostrarAlerta('Código agregado exitosamente al tarifario.', 'success');
       handleBuscarPrecio(); // re-evaluar automáticamente
     }
   };
@@ -296,20 +297,20 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
 
   const handleCerrarSemana = async () => {
     if (guiasSemanaVisibles.length === 0) return;
-    const confirm = window.confirm('¿Estás seguro de guardar los valores de la semana? Esto cuadrará las guías activas del transportista seleccionado.');
+    const confirm = await confirmar('¿Estás seguro de guardar los valores de la semana? Esto cuadrará las guías activas del transportista seleccionado.');
     if (!confirm) return;
 
     const res = await cerrarSemanaGlobal(transportistaId);
     if (res.error) {
-      alert(res.error);
+      mostrarAlerta(res.error, 'error');
     } else {
-      alert('Valores de la semana guardados con éxito.');
+      mostrarAlerta('Valores de la semana guardados con éxito.', 'success');
       fetchGuiasSemana();
     }
   };
 
   const handleEliminarActiva = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar esta guía?")) {
+    if (await confirmar("¿Estás seguro de eliminar esta guía?")) {
       setDeletingId(id);
       await eliminarGuiaActiva(id);
       await fetchGuiasSemana();
@@ -397,7 +398,7 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
     const res = await actualizarValoresMultiples(updates);
     
     if (res?.error) {
-      alert("Error al actualizar: " + res.error);
+      mostrarAlerta("Error al actualizar: " + res.error, 'error');
     } else {
       await fetchGuiasSemana();
       cancelGroupEditing();

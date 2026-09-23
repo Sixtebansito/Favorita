@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { crearUsuario, eliminarUsuario, cambiarPassword, toggleStatusUsuario } from './actions';
 import styles from './usuario.module.css';
+import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
 export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
   const [error, setError] = useState<string | null>(null);
@@ -27,9 +28,9 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
   };
 
   const handleEliminar = async (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este usuario?')) {
+    if (await confirmar('¿Estás seguro de eliminar este usuario?')) {
       const res = await eliminarUsuario(id);
-      if (res.error) alert(res.error);
+      if (res.error) mostrarAlerta(res.error, 'error');
     }
   };
 
@@ -38,9 +39,9 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
     if (nueva !== null && nueva.trim() !== '') {
       const res = await cambiarPassword(id, nueva.trim());
       if (res.error) {
-        alert(res.error);
+        mostrarAlerta(res.error, 'error');
       } else {
-        alert('¡Contraseña actualizada con éxito!');
+        mostrarAlerta('¡Contraseña actualizada con éxito!', 'success');
       }
     }
   };
@@ -48,9 +49,9 @@ export default function UsuarioClient({ usuarios }: { usuarios: any[] }) {
   const handleToggleStatus = async (id: string, currentState: boolean) => {
     const newState = !currentState;
     const action = newState ? 'habilitar' : 'deshabilitar';
-    if (confirm(`¿Estás seguro de ${action} este usuario?`)) {
+    if (await confirmar(`¿Estás seguro de ${action} este usuario?`)) {
       const res = await toggleStatusUsuario(id, newState);
-      if (res.error) alert(res.error);
+      if (res.error) mostrarAlerta(res.error, 'error');
     }
   };
 

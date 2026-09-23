@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { generarPrefactura, liquidarValores } from './actions';
 import styles from './prefactura.module.css';
 import * as XLSX from 'xlsx';
+import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
 export default function PrefacturaClient({ transportistas }: { transportistas: any[] }) {
   const [transportistaId, setTransportistaId] = useState('');
@@ -114,7 +115,7 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
   const handleLiquidar = async () => {
     if (!reporte || reporte.guiasOriginales.length === 0) return;
     
-    const confirmacion = window.confirm("¿Estás seguro de liquidar? Los valores de semanas se limpiarán (pasarán a estado LIQUIDADA) y se generará el registro en el historial del transportista.");
+    const confirmacion = await confirmar("¿Estás seguro de liquidar? Los valores de semanas se limpiarán (pasarán a estado LIQUIDADA) y se generará el registro en el historial del transportista.");
     
     if (!confirmacion) return;
 
@@ -141,9 +142,9 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
     const res = await liquidarValores(transportistaId, fechaInicio, fechaFin, totalPagado, totalTickets, guiasIds);
     
     if (res.error) {
-      alert("Error al liquidar: " + res.error);
+      mostrarAlerta("Error al liquidar: " + res.error, 'error');
     } else {
-      alert("Liquidación generada con éxito. Descargando prefactura...");
+      mostrarAlerta("Liquidación generada con éxito. Descargando prefactura...", 'success');
       exportarAExcel(reporte, `Prefactura_${transportistaId}_${fechaInicio}_${fechaFin}.xlsx`);
       setReporte(null); // Limpiamos la pantalla
     }

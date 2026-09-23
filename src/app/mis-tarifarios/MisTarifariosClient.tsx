@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Pencil, Check, X, Loader2, Plus, Trash2, FileText } from 'lucide-react';
 import { addPrivateCode, updatePrivateCode, deletePrivateCode } from './actions';
+import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
 export default function MisTarifariosClient({ misPrecios }: { misPrecios: any[] }) {
   const [editingPrecioId, setEditingPrecioId] = useState<string | null>(null);
@@ -26,17 +27,17 @@ export default function MisTarifariosClient({ misPrecios }: { misPrecios: any[] 
     if (res.success) {
       setEditingPrecioId(null);
     } else {
-      alert(res.error || 'Error al actualizar precio');
+      mostrarAlerta(res.error || 'Error al actualizar precio', 'error');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar este código privado?')) return;
+    if (!await confirmar('¿Estás seguro de eliminar este código privado?')) return;
     setIsUpdating(true);
     const res = await deletePrivateCode(id);
     setIsUpdating(false);
     if (!res.success) {
-      alert(res.error || 'Error al eliminar');
+      mostrarAlerta(res.error || 'Error al eliminar', 'error');
     }
   };
 
@@ -52,7 +53,7 @@ export default function MisTarifariosClient({ misPrecios }: { misPrecios: any[] 
       setNewDescripcion('');
       setNewValor('');
     } else {
-      alert(res.error || 'Error al agregar');
+      mostrarAlerta(res.error || 'Error al agregar', 'error');
     }
   };
 

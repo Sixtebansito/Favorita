@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { generateBackupData, guardarConfiguracion, registrarBackupManual } from '@/app/actions/backup';
+import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
 interface BackupHistoryItem {
   id: string;
@@ -37,7 +38,7 @@ export default function BackupClient({
   };
 
   const handleDownloadBackup = async () => {
-    if (!confirm('¿Estás seguro de generar un backup completo? Puede tardar unos segundos.')) return;
+    if (!await confirmar('¿Estás seguro de generar un backup completo? Puede tardar unos segundos.')) return;
     setLoadingBackup(true);
     setMessage({ type: '', text: '' });
     try {
