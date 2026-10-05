@@ -476,6 +476,7 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
             <div className={styles.addAdicional}>
               <input 
                 type="text" 
+                list="codigos-tarifario"
                 className="form-input"
                 value={nuevoCodigo} 
                 onChange={(e) => setNuevoCodigo(e.target.value.toUpperCase())} 
@@ -488,6 +489,11 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
                   }
                 }}
               />
+              <datalist id="codigos-tarifario">
+                {ultimoTarifario?.precios?.map((p: any) => (
+                  <option key={p.codigo} value={p.codigo}>{p.descripcion}</option>
+                ))}
+              </datalist>
               <button type="button" onClick={handleAddCodigo} className="btn btn-secondary" style={{ padding: '0.5rem 1rem' }}>
                 <span className="desktop-only">Añadir Código</span>
                 <span className="mobile-only">+</span>
@@ -720,6 +726,7 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
                                   <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
                                     <input 
                                       type="text" 
+                                      list="codigos-tarifario"
                                       className="form-input" 
                                       value={nuevoCodigoGuia} 
                                       onChange={(e) => setNuevoCodigoGuia(e.target.value.toUpperCase())}

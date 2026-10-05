@@ -25,7 +25,8 @@ export default async function RegistroGuiasPage() {
   });
 
   const ultimoTarifario = await prisma.tarifario.findFirst({
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    include: { precios: true }
   });
 
   return (
