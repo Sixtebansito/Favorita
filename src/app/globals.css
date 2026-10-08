@@ -481,3 +481,11 @@ a {
   .mobile-only { display: none !important; }
 }
 
+
+
+/* Evitar auto-zoom en inputs en iOS Safari */
+@media screen and (max-width: 768px) {
+  input, select, textarea, .form-input, .form-select {
+    font-size: 16px !important;
+  }
+}

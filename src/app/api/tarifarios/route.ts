@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
       });
 
       let preciosCreados = 0;
+      const addedStandardCodes = new Set<string>();
 
       for (let i = 1; i < rawData.length; i++) {
         const row = rawData[i];
@@ -104,6 +105,8 @@ export async function POST(req: NextRequest) {
           }
         });
 
+        addedStandardCodes.add(codigo.toUpperCase());
+
         preciosCreados++;
       }
 
@@ -114,25 +117,38 @@ export async function POST(req: NextRequest) {
       });
 
       if (previousTarifario) {
-        const customCodes = await tx.guiaPrecio.findMany({
+        const previousCodes = await tx.guiaPrecio.findMany({
           where: {
             tarifarioId: previousTarifario.id,
-            userId: { not: null }
           }
         });
 
-        for (const customCode of customCodes) {
-          await tx.guiaPrecio.create({
-            data: {
-              tarifarioId: nuevoTarifario.id,
-              userId: customCode.userId,
-              codigo: customCode.codigo,
-              tipo: customCode.tipo,
-              descripcion: customCode.descripcion,
-              valor: customCode.valor
+        for (const prevCode of previousCodes) {
+          let shouldMigrate = false;
+          
+          if (prevCode.userId === null) {
+            // Código base: lo pasamos si no venía en el Excel
+            if (!addedStandardCodes.has(prevCode.codigo.toUpperCase())) {
+              shouldMigrate = true;
             }
-          });
-          preciosCreados++;
+          } else {
+            // Código personalizado: siempre se pasa al nuevo tarifario
+            shouldMigrate = true;
+          }
+
+          if (shouldMigrate) {
+            await tx.guiaPrecio.create({
+              data: {
+                tarifarioId: nuevoTarifario.id,
+                userId: prevCode.userId,
+                codigo: prevCode.codigo,
+                tipo: prevCode.tipo,
+                descripcion: prevCode.descripcion,
+                valor: prevCode.valor
+              }
+            });
+            preciosCreados++;
+          }
         }
       }
 
