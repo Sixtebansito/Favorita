@@ -6,7 +6,7 @@ import styles from './registro.module.css';
 import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
 
-const AutocompleteInput = ({ value, onChange, options, placeholder, style, className, onEnter, inputProps = {} }: any) => {
+const AutocompleteInput = ({ value, onChange, options, placeholder, style, className, onEnter, onSelect, inputProps = {} }: any) => {
   const [show, setShow] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   
@@ -25,9 +25,11 @@ const AutocompleteInput = ({ value, onChange, options, placeholder, style, class
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (show && activeIdx >= 0 && filtered[activeIdx]) {
-        onChange(filtered[activeIdx].codigo);
+        const selectedCode = filtered[activeIdx].codigo;
+        onChange(selectedCode);
         setShow(false);
         setActiveIdx(-1);
+        if (onSelect) onSelect(selectedCode);
       } else {
         setShow(false);
         if (onEnter) onEnter();
@@ -73,6 +75,7 @@ const AutocompleteInput = ({ value, onChange, options, placeholder, style, class
                 e.preventDefault(); // evita el blur del input
                 onChange(o.codigo);
                 setShow(false);
+                if (onSelect) onSelect(o.codigo);
               }}
             >
               <strong style={{ color: 'var(--primary)' }}>{o.codigo}</strong> 
@@ -161,19 +164,20 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
   const [nuevoCodigoGuia, setNuevoCodigoGuia] = useState<string>('');
   const [savingCodigo, setSavingCodigo] = useState<boolean>(false);
 
-  const handleGuardarNuevoCodigo = async (guiaId: string) => {
-    if (!nuevoCodigoGuia.trim()) {
+  const handleGuardarNuevoCodigo = async (guiaId: string, directCode?: string) => {
+    const codeToSave = directCode || nuevoCodigoGuia;
+    if (!codeToSave.trim()) {
       mostrarAlerta("Por favor ingresa un código.", 'info');
       return;
     }
     setSavingCodigo(true);
-    const res = await cambiarCodigoGuiaActiva(guiaId, nuevoCodigoGuia.trim().toUpperCase());
+    const res = await cambiarCodigoGuiaActiva(guiaId, codeToSave.trim().toUpperCase());
     setSavingCodigo(false);
 
     if (res.error) {
       mostrarAlerta("Error: " + res.error, 'error');
     } else {
-      mostrarAlerta(`Código actualizado correctamente a ${nuevoCodigoGuia.trim().toUpperCase()}. Precio base: $${res.base}, Ticket: $${res.ticket}.`, 'success');
+      mostrarAlerta(`Código actualizado correctamente a ${codeToSave.trim().toUpperCase()}. Precio base: $${res.base}, Ticket: $${res.ticket}.`, 'success');
       setEditingCodigoId(null);
       fetchGuiasSemana();
     }
@@ -244,13 +248,12 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
     setShowTarifarioNotification(false);
   };
 
-  const handleAddCodigo = (e?: React.FormEvent) => {
+  const handleAddCodigo = (e?: React.FormEvent, directCode?: string) => {
     e?.preventDefault();
-    if (!nuevoCodigo.trim()) return;
-    const code = nuevoCodigo.trim().toUpperCase();
-    if (!codigos.includes(code)) {
-      setCodigos([...codigos, code]);
-    }
+    const targetCode = (directCode || nuevoCodigo).trim().toUpperCase();
+    if (!targetCode) return;
+    
+    setCodigos(prev => prev.includes(targetCode) ? prev : [...prev, targetCode]);
     setNuevoCodigo('');
     setPrecioPreview(null);
   };
@@ -564,6 +567,10 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
                   handleAddCodigo();
                   setTimeout(() => handleBuscarPrecio(), 50);
                 }}
+                onSelect={(code: string) => {
+                  handleAddCodigo(undefined, code);
+                  setTimeout(() => handleBuscarPrecio(), 50);
+                }}
               />
               
               <button type="button" onClick={handleAddCodigo} className="btn btn-secondary" style={{ padding: '0.5rem 1rem' }}>
@@ -803,6 +810,7 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
                                       options={ultimoTarifario?.precios}
                                       style={{ width: '120px' }}
                                       inputProps={{ style: { padding: '0.25rem', fontSize: '0.75rem', height: '2rem', width: '100%' } }}
+                                      onSelect={(code: string) => handleGuardarNuevoCodigo(guia.id, code)}
                                     />
                                     <button 
                                       onClick={() => handleGuardarNuevoCodigo(guia.id)}
