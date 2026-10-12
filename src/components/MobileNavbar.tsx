@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Home, FileText, FileSpreadsheet, Truck, Users, Settings, LogOut, Menu, X, Wallet, Wrench, Package } from 'lucide-react';
 import { logout } from '@/app/actions/auth';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 export default function MobileNavbar({ user }: { user: any }) {
   const pathname = usePathname();
@@ -72,9 +73,14 @@ export default function MobileNavbar({ user }: { user: any }) {
 
       {/* Drawer Content */}
       <div className={`mobile-drawer ${isDrawerOpen ? 'open' : ''}`}>
-        <div className="mobile-drawer-header">
-          <p className="mobile-drawer-title">{user.name}</p>
-          <p className="mobile-drawer-subtitle">{isAdmin ? 'Administrador' : 'Usuario'}</p>
+        <div className="mobile-drawer-header" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{ position: 'relative', width: '42px', height: '42px', flexShrink: 0, borderRadius: '10px', overflow: 'hidden' }}>
+            <Image src="/logo.png" alt="Logo" fill sizes="42px" unoptimized style={{ objectFit: 'contain' }} />
+          </div>
+          <div>
+            <p className="mobile-drawer-title">{user.name}</p>
+            <p className="mobile-drawer-subtitle">{isAdmin ? 'Administrador' : 'Usuario'}</p>
+          </div>
         </div>
         <div className="mobile-drawer-content">
           {moreNavItems.filter(item => item.show).map((item) => {
