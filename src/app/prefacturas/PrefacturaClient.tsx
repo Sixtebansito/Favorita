@@ -6,20 +6,54 @@ import styles from './prefactura.module.css';
 import * as XLSX from 'xlsx';
 import { confirmar, mostrarAlerta } from '@/app/utils/alerts';
 
-export default function PrefacturaClient({ transportistas }: { transportistas: any[] }) {
-  const [transportistaId, setTransportistaId] = useState('');
+export interface CierreItem {
+  id: string;
+  transportistaId: string;
+  transportistaNombre: string;
+  tipo: string;
+  total: number;
+  total_tickets: number;
+  guiasCount: number;
+  createdAt: string;
+}
+
+interface PrefacturaClientProps {
+  transportistas: any[];
+  cierres?: CierreItem[];
+  initialCierreId?: string;
+  initialTransportistaId?: string;
+}
+
+export default function PrefacturaClient({ 
+  transportistas, 
+  cierres = [], 
+  initialCierreId = '', 
+  initialTransportistaId = '' 
+}: PrefacturaClientProps) {
+  const [transportistaId, setTransportistaId] = useState<string>(
+    initialTransportistaId || (transportistas.length === 1 ? transportistas[0].id : '')
+  );
   const [cabezalId, setCabezalId] = useState('');
-  
-  // Calcular fecha de hace un mes
+
+  const cierresDelTransportista = cierres.filter(c => c.transportistaId === transportistaId);
+
+  // Inicializar origen: semana cuadrada si existe, o manual
+  const [cierreSemanaId, setCierreSemanaId] = useState<string>(() => {
+    if (initialCierreId) return initialCierreId;
+    if (cierresDelTransportista.length > 0) return cierresDelTransportista[0].id;
+    return 'MANUAL_DATES';
+  });
+
+  // Calcular fecha de hace un mes para rango manual
   const dateObj = new Date();
   dateObj.setMonth(dateObj.getMonth() - 1);
   const unMesAntes = dateObj.toISOString().split('T')[0];
-  
   const today = new Date().toISOString().split('T')[0];
+
   const [fechaInicio, setFechaInicio] = useState(unMesAntes);
   const [fechaFin, setFechaFin] = useState(today);
   const [incluirActivas, setIncluirActivas] = useState(false);
-  
+
   const [reporte, setReporte] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [liquidando, setLiquidando] = useState(false);
@@ -34,6 +68,20 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
     }
   }, [transportistas, transportistaId]);
 
+  // Si cambia el transportista, ajustar la semana seleccionada
+  useEffect(() => {
+    const cierresValidos = cierres.filter(c => c.transportistaId === transportistaId);
+    if (cierresValidos.length > 0) {
+      if (!cierresValidos.some(c => c.id === cierreSemanaId) && cierreSemanaId !== 'ALL_PENDIENTES' && cierreSemanaId !== 'MANUAL_DATES') {
+        setCierreSemanaId(cierresValidos[0].id);
+      }
+    } else {
+      if (cierreSemanaId !== 'MANUAL_DATES') {
+        setCierreSemanaId('MANUAL_DATES');
+      }
+    }
+  }, [transportistaId, cierres, cierreSemanaId]);
+
   // Auto-seleccionar cabezal si cambia transportista
   useEffect(() => {
     if (cabezalesDisponibles.length === 1 && !cabezalId) {
@@ -41,13 +89,44 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
     } else if (cabezalesDisponibles.length === 0 || !cabezalesDisponibles.find((c: any) => c.id === cabezalId)) {
       setCabezalId('');
     }
-  }, [cabezalesDisponibles, cabezalId]);  
-  const handleGenerar = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!transportistaId || !fechaInicio || !fechaFin) return;
-    
+  }, [cabezalesDisponibles, cabezalId]);
+
+  // Auto-ejecución si se viene desde el enlace directo de Semanas (Cierres)
+  useEffect(() => {
+    if (initialCierreId && initialTransportistaId) {
+      const autoFetch = async () => {
+        setLoading(true);
+        const data = await generarPrefactura(
+          initialTransportistaId,
+          undefined,
+          undefined,
+          false,
+          cabezalId || undefined,
+          initialCierreId
+        );
+        setReporte(data);
+        setLoading(false);
+      };
+      autoFetch();
+    }
+  }, [initialCierreId, initialTransportistaId]);
+
+  const handleGenerar = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!transportistaId) return;
+
+    const isManual = cierreSemanaId === 'MANUAL_DATES';
+    if (isManual && (!fechaInicio || !fechaFin)) return;
+
     setLoading(true);
-    const data = await generarPrefactura(transportistaId, fechaInicio, fechaFin, incluirActivas, cabezalId || undefined);
+    const data = await generarPrefactura(
+      transportistaId,
+      isManual ? fechaInicio : undefined,
+      isManual ? fechaFin : undefined,
+      isManual ? incluirActivas : false,
+      cabezalId || undefined,
+      cierreSemanaId
+    );
     setReporte(data);
     setLoading(false);
   };
@@ -55,14 +134,16 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
   const agruparGuias = (guias: any[]) => {
     const grupos: Record<string, any> = {};
     guias.forEach(g => {
-      const totalAdicionales = g.adicionales.reduce((acc: number, a: any) => acc + a.valor, 0);
-      const valorTotal = g.valor_base_cobrado + totalAdicionales;
+      const totalAdicionales = (g.adicionales || []).reduce((acc: number, a: any) => acc + (a?.valor || 0), 0);
+      const valorTotal = (g.valor_base_cobrado || 0) + totalAdicionales;
+      const descripcion = g.guiaPrecio?.descripcion || g.cliente_destino || 'Guía';
+      const codigo = g.guiaPrecio?.codigo || '';
       
-      const key = valorTotal >= 100 ? `${valorTotal}` : `${g.guiaPrecio.descripcion}_${valorTotal}`;
+      const key = valorTotal >= 100 ? `${valorTotal}` : `${descripcion}_${valorTotal}`;
       if (!grupos[key]) {
         grupos[key] = {
-          codigo: g.guiaPrecio.codigo,
-          descripcion: g.guiaPrecio.descripcion,
+          codigo,
+          descripcion,
           valorUnitario: valorTotal,
           cantidad: 0,
           total: 0
@@ -75,7 +156,7 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
     return Object.values(grupos).sort((a: any, b: any) => b.valorUnitario - a.valorUnitario);
   };
 
-  const exportarAExcel = (reporteParaExportar: any = reporte, fileName: string = `Prefactura_${new Date().getTime()}.xlsx`) => {
+  const exportarAExcel = (reporteParaExportar: any = reporte, customFileName?: string) => {
     if (!reporteParaExportar) return;
 
     const data: any[] = [];
@@ -109,11 +190,14 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Prefactura");
+
+    const tName = selectedTransportistaData?.name ? selectedTransportistaData.name.replace(/[^a-zA-Z0-9]/g, '_') : 'Transportista';
+    const fileName = customFileName || `Prefactura_${tName}_${Date.now()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 
   const handleLiquidar = async () => {
-    if (!reporte || reporte.guiasOriginales.length === 0) return;
+    if (!reporte || !reporte.guiasOriginales || reporte.guiasOriginales.length === 0) return;
     
     const confirmacion = await confirmar("¿Estás seguro de liquidar? Los valores de semanas se limpiarán (pasarán a estado LIQUIDADA) y se generará el registro en el historial del transportista.");
     
@@ -139,13 +223,22 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
 
     const totalTickets = reporte.guiasOriginales.reduce((acc: number, g: any) => acc + (g.valor_ticket || 0), 0);
 
-    const res = await liquidarValores(transportistaId, fechaInicio, fechaFin, totalPagado, totalTickets, guiasIds);
+    const isManual = cierreSemanaId === 'MANUAL_DATES';
+    const res = await liquidarValores(
+      transportistaId, 
+      isManual ? fechaInicio : undefined, 
+      isManual ? fechaFin : undefined, 
+      totalPagado, 
+      totalTickets, 
+      guiasIds
+    );
     
     if (res.error) {
       mostrarAlerta("Error al liquidar: " + res.error, 'error');
     } else {
       mostrarAlerta("Liquidación generada con éxito. Descargando prefactura...", 'success');
-      exportarAExcel(reporte, `Prefactura_${transportistaId}_${fechaInicio}_${fechaFin}.xlsx`);
+      const nombreSemana = cierreSemanaId !== 'MANUAL_DATES' ? `Semana_Cuadrada` : `${fechaInicio}_${fechaFin}`;
+      exportarAExcel(reporte, `Prefactura_${selectedTransportistaData?.name || transportistaId}_${nombreSemana}.xlsx`);
       setReporte(null); // Limpiamos la pantalla
     }
     
@@ -191,53 +284,121 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
     );
   };
 
+  const isModoSemana = cierreSemanaId !== 'MANUAL_DATES';
+
   return (
     <div className={styles.container}>
       <form onSubmit={handleGenerar} className={styles.filters}>
         <div className={styles.formGroup}>
           <label>Transportista</label>
-          <select value={transportistaId} onChange={e => { setTransportistaId(e.target.value); setCabezalId(''); }} required>
+          <select 
+            value={transportistaId} 
+            onChange={e => { 
+              setTransportistaId(e.target.value); 
+              setCabezalId(''); 
+            }} 
+            required
+          >
             <option value="">Seleccione un transportista</option>
             {transportistas.map(t => (
               <option key={t.id} value={t.id}>{t.name} ({t.ruc})</option>
             ))}
           </select>
         </div>
+
+        <div className={styles.formGroup}>
+          <label>Origen / Semana Cuadrada</label>
+          <select 
+            value={cierreSemanaId} 
+            onChange={e => setCierreSemanaId(e.target.value)}
+            disabled={!transportistaId}
+          >
+            {cierresDelTransportista.length > 0 ? (
+              <>
+                <optgroup label="Semanas Cuadradas Pendientes">
+                  {cierresDelTransportista.map(c => (
+                    <option key={c.id} value={c.id}>
+                      Semana {new Date(c.createdAt).toLocaleDateString('es-ES')} ({c.tipo}) — {c.guiasCount} {c.guiasCount === 1 ? 'guía' : 'guías'} (${c.total.toFixed(2)})
+                    </option>
+                  ))}
+                  {cierresDelTransportista.length > 1 && (
+                    <option value="ALL_PENDIENTES">
+                      ⚡ Todas las semanas cuadradas pendientes ({cierresDelTransportista.reduce((acc, c) => acc + c.guiasCount, 0)} guías)
+                    </option>
+                  )}
+                </optgroup>
+                <optgroup label="Opciones Avanzadas">
+                  <option value="MANUAL_DATES">📅 Rango manual por fechas</option>
+                </optgroup>
+              </>
+            ) : (
+              <option value="MANUAL_DATES">📅 Rango manual por fechas (Sin semanas pendientes)</option>
+            )}
+          </select>
+        </div>
         
         <div className={styles.formGroup}>
           <label>Cabezal / Placa (Opcional)</label>
-          <select value={cabezalId} onChange={e => setCabezalId(e.target.value)} disabled={!transportistaId || cabezalesDisponibles.length === 0}>
+          <select 
+            value={cabezalId} 
+            onChange={e => setCabezalId(e.target.value)} 
+            disabled={!transportistaId || cabezalesDisponibles.length === 0}
+          >
             <option value="">Todos los cabezales</option>
             {cabezalesDisponibles.map((c: any) => (
               <option key={c.id} value={c.id}>{c.placa} ({c.tipo})</option>
             ))}
           </select>
         </div>
-        
-        <div className={styles.formGroup}>
-          <label>Fecha Inicio</label>
-          <input type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} required />
-        </div>
 
-        <div className={styles.formGroup}>
-          <label>Fecha Fin</label>
-          <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} required />
-        </div>
+        {!isModoSemana && (
+          <>
+            <div className={styles.formGroup}>
+              <label>Fecha Inicio</label>
+              <input type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} required={!isModoSemana} />
+            </div>
 
-        <div className={styles.checkboxGroup}>
-          <input 
-            type="checkbox" 
-            id="incluirActivas" 
-            checked={incluirActivas} 
-            onChange={e => setIncluirActivas(e.target.checked)} 
-            style={{ width: '1.25rem', height: '1.25rem', margin: 0, cursor: 'pointer', accentColor: 'var(--primary)' }}
-          />
-          <label htmlFor="incluirActivas" style={{ margin: 0, fontWeight: 500, cursor: 'pointer', fontSize: '0.9rem' }}>
-            Incluir guías de la semana en curso (No cuadradas)
-          </label>
-        </div>
+            <div className={styles.formGroup}>
+              <label>Fecha Fin</label>
+              <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} required={!isModoSemana} />
+            </div>
 
-        <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading}>
+            <div className={styles.checkboxGroup}>
+              <input 
+                type="checkbox" 
+                id="incluirActivas" 
+                checked={incluirActivas} 
+                onChange={e => setIncluirActivas(e.target.checked)} 
+                style={{ width: '1.25rem', height: '1.25rem', margin: 0, cursor: 'pointer', accentColor: 'var(--primary)' }}
+              />
+              <label htmlFor="incluirActivas" style={{ margin: 0, fontWeight: 500, cursor: 'pointer', fontSize: '0.9rem' }}>
+                Incluir guías de la semana en curso (No cuadradas)
+              </label>
+            </div>
+          </>
+        )}
+
+        {isModoSemana && (
+          <div style={{ 
+            gridColumn: '1 / -1', 
+            padding: '0.75rem 1rem', 
+            backgroundColor: 'var(--muted)', 
+            borderRadius: 'var(--radius)', 
+            border: '1px solid var(--border)',
+            fontSize: '0.85rem',
+            color: 'var(--muted-foreground)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span>🔒</span>
+            <span>
+              <strong>Modo Semana Cuadrada:</strong> Se leen exactamente todas las guías de la semana cerrada en <em>Semanas (Cierres)</em>, incluyendo guías con fecha anterior.
+            </span>
+          </div>
+        )}
+
+        <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading || !transportistaId}>
           {loading ? 'Generando...' : 'Generar Reporte'}
         </button>
       </form>
@@ -257,15 +418,21 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
           sumarGuias(reporte?.pofasaCabezal) + 
           sumarGuias(reporte?.agropesaCabezal);
 
-        const totalTickets = reporte.guiasOriginales.reduce((acc: number, g: any) => acc + (g.valor_ticket || 0), 0);
+        const totalTickets = (reporte?.guiasOriginales || []).reduce((acc: number, g: any) => acc + (g.valor_ticket || 0), 0);
+        const totalGuiasCount = (reporte?.guiasOriginales || []).length;
 
         return (
           <div className={styles.reportContainer}>
             <div className={styles.reportHeader} style={{ flexWrap: 'wrap', gap: '10px' }}>
-              <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Resultados de Prefactura</h2>
+              <div>
+                <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Resultados de Prefactura</h2>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>
+                  {isModoSemana ? 'Generada por Semana Cuadrada' : `Periodo: ${fechaInicio} al ${fechaFin}`}
+                </p>
+              </div>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <button className="btn btn-secondary" onClick={() => exportarAExcel()}>Exportar a Excel</button>
-                {reporte.guiasOriginales.length > 0 && (
+                {totalGuiasCount > 0 && (
                   <button 
                     className="btn btn-danger" 
                     onClick={handleLiquidar}
@@ -280,7 +447,9 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
             <div style={{ backgroundColor: 'var(--primary)', color: 'white', padding: '1rem', borderRadius: 'var(--radius)', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Total a Pagar (Gran Total)</h3>
-                <p style={{ margin: 0, opacity: 0.8, fontSize: '0.8rem', marginTop: '0.25rem' }}>Suma de facturas normales y adicionales</p>
+                <p style={{ margin: 0, opacity: 0.8, fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                  {isModoSemana ? 'Semana Cuadrada' : 'Rango por fechas'} | Suma de guías normales y especiales
+                </p>
               </div>
               <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
                 <div style={{ textAlign: 'right' }}>
@@ -289,7 +458,7 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
                 </div>
                 <div style={{ width: '1px', height: '30px', backgroundColor: 'rgba(255,255,255,0.3)' }}></div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.75rem', opacity: 0.8, fontWeight: 600 }}>GUÍAS</div>
+                  <div style={{ fontSize: '0.75rem', opacity: 0.8, fontWeight: 600 }}>GUÍAS ({totalGuiasCount})</div>
                   <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>${totalGeneral.toFixed(2)}</h2>
                 </div>
               </div>
@@ -300,8 +469,10 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
             {renderTable("Prefactura POFASA", reporte?.pofasaCabezal || [], '#f87171')}
             {renderTable("Prefactura AGROPESA", reporte?.agropesaCabezal || [], '#60a5fa')}
 
-            {reporte.guiasOriginales.length === 0 && (
-              <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted-foreground)' }}>No hay guías registradas en este periodo para este transportista.</p>
+            {totalGuiasCount === 0 && (
+              <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted-foreground)' }}>
+                No hay guías registradas para los filtros seleccionados.
+              </p>
             )}
 
           </div>
@@ -310,4 +481,3 @@ export default function PrefacturaClient({ transportistas }: { transportistas: a
     </div>
   );
 }
-

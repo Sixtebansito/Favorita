@@ -6,7 +6,7 @@
 
 .filters {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
   background-color: var(--card);
   padding: 1.5rem;

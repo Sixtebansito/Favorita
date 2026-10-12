@@ -290,25 +290,34 @@ export default function SemanasClient({ cierres, cabezales }: { cierres: any[], 
                   </p>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tickets</span>
-                  <p style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--foreground)' }}>
-                    ${(cierre.total_tickets || 0).toFixed(2)}
-                  </p>
-                </div>
-                <div style={{ width: '1px', height: '40px', backgroundColor: 'var(--border)' }}></div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Semana</span>
-                  <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--foreground)' }}>
-                    ${cierre.total.toFixed(2)}
-                  </p>
-                </div>
-                <div style={{ color: 'var(--muted-foreground)', fontSize: '1.25rem', marginLeft: '1rem' }}>
-                  {expandedId === cierre.id ? '▼' : '▶'}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                  <a 
+                    href={`/prefacturas?cierreId=${cierre.id}&transportistaId=${cierre.transportistaId}`}
+                    className="btn btn-primary"
+                    style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                    onClick={(e) => e.stopPropagation()}
+                    title="Generar Prefactura de esta semana cuadrada"
+                  >
+                    📄 Prefactura
+                  </a>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tickets</span>
+                    <p style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--foreground)' }}>
+                      ${(cierre.total_tickets || 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <div style={{ width: '1px', height: '40px', backgroundColor: 'var(--border)' }}></div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Semana</span>
+                    <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                      ${cierre.total.toFixed(2)}
+                    </p>
+                  </div>
+                  <div style={{ color: 'var(--muted-foreground)', fontSize: '1.25rem', marginLeft: '0.5rem' }}>
+                    {expandedId === cierre.id ? '▼' : '▶'}
+                  </div>
                 </div>
               </div>
-            </div>
 
             {expandedId === cierre.id && (
               <div style={{ borderTop: '1px solid var(--border)', padding: '1rem', backgroundColor: 'var(--background)' }}>
@@ -318,9 +327,20 @@ export default function SemanasClient({ cierres, cabezales }: { cierres: any[], 
                   return (
                   <div key={grupo.cabezal.id} style={{ marginBottom: '2rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-                      <h4 style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--primary)', margin: 0 }}>
-                        Cabezal: {grupo.cabezal.placa}
-                        <span style={{ marginLeft: '1rem', fontWeight: 'normal', color: 'var(--foreground)' }}>
+                      <h4 style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <span>Cabezal: {grupo.cabezal.placa} ({grupo.cabezal.tipo || 'CABEZAL'})</span>
+                        <span style={{ 
+                          backgroundColor: 'var(--secondary)', 
+                          color: 'var(--secondary-foreground)', 
+                          padding: '2px 8px', 
+                          borderRadius: '9999px', 
+                          fontSize: '0.75rem', 
+                          fontWeight: 700,
+                          border: '1px solid var(--border)'
+                        }}>
+                          {grupo.guias.length} {grupo.guias.length === 1 ? 'guía' : 'guías'}
+                        </span>
+                        <span style={{ fontWeight: 'normal', color: 'var(--foreground)' }}>
                           Subtotal: ${grupo.subtotal.toFixed(2)} <span style={{ opacity: 0.7, fontSize: '0.8rem', marginLeft: '0.5rem' }}>| Tickets: ${grupo.totalTickets.toFixed(2)}</span>
                         </span>
                       </h4>
