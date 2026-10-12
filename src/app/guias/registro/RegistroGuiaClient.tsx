@@ -278,13 +278,14 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
     }
   };
 
-  const handleBuscarPrecio = async (overrideCodigos?: string[]) => {
+  const handleBuscarPrecio = async (overrideCodigos?: string[] | React.MouseEvent) => {
     setError(null);
     setPrecioPreview(null);
     
-    // Si se pasan códigos explícitos, se usan esos y no se lee el input residual
-    let codigosEvaluar = overrideCodigos ? [...overrideCodigos] : [...codigos];
-    if (!overrideCodigos && nuevoCodigo.trim()) {
+    // Si se pasan códigos explícitos en un array, se usan esos y no se lee el input residual
+    const hasExplicitCodigos = Array.isArray(overrideCodigos);
+    let codigosEvaluar = hasExplicitCodigos ? [...overrideCodigos] : [...codigos];
+    if (!hasExplicitCodigos && nuevoCodigo.trim()) {
       const code = nuevoCodigo.trim().toUpperCase();
       if (!codigosEvaluar.includes(code)) {
         codigosEvaluar.push(code);
@@ -619,7 +620,7 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
               </ul>
             )}
 
-            <button type="button" onClick={handleBuscarPrecio} className="btn btn-secondary" style={{ marginTop: '0.5rem' }}>
+            <button type="button" onClick={() => handleBuscarPrecio()} className="btn btn-secondary" style={{ marginTop: '0.5rem' }}>
               Comparar y Buscar Valor
             </button>
           </div>
