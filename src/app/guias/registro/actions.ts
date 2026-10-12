@@ -26,11 +26,12 @@ export async function lookupPrecio(codigo: string, fecha: string) {
     return { error: 'No se encontró un tarifario vigente para esa fecha.' };
   }
 
-  // Ahora busca el precio en ese tarifario
+  // Ahora busca el precio en ese tarifario (con o sin asterisco)
+  const codigosBuscados = Array.from(new Set([codigo, `${codigo}*`, codigo.replace(/\*+$/, '')]));
   const precio = await prisma.guiaPrecio.findFirst({
     where: {
       tarifarioId: tarifario.id,
-      codigo: codigo
+      codigo: { in: codigosBuscados }
     }
   });
 
@@ -55,10 +56,16 @@ export async function lookupPreciosMultiple(codigos: string[], fecha: string) {
     return { error: 'No se encontró un tarifario vigente para esa fecha.' };
   }
 
+  const codigosConVariantes = Array.from(new Set([
+    ...codigos,
+    ...codigos.map(c => `${c}*`),
+    ...codigos.map(c => c.replace(/\*+$/, ''))
+  ]));
+
   const precios = await prisma.guiaPrecio.findMany({
     where: {
       tarifarioId: tarifario.id,
-      codigo: { in: codigos },
+      codigo: { in: codigosConVariantes },
       OR: [
         { userId: null },
         { userId: session.id }

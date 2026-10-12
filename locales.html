@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Locales y Valores</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg-color: #f3f4f6;
+            --sidebar-bg: #1f2937;
+            --sidebar-text: #f9fafb;
+            --surface: #ffffff;
+            --text: #111827;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        body { display: flex; height: 100vh; background-color: var(--bg-color); color: var(--text); }
+
+        /* Panel Lateral */
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); color: var(--sidebar-text); display: flex; flex-direction: column; padding: 20px 0; }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid #374151; margin-bottom: 10px; font-weight: bold; font-size: 1.2rem; }
+        .list-menu { flex-grow: 1; overflow-y: auto; list-style: none; }
+        .list-item { padding: 12px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+        .list-item:hover { background-color: #374151; }
+        .list-item.active { background-color: var(--primary); font-weight: bold; }
+        .delete-list-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1rem; display: none; }
+        .list-item:hover .delete-list-btn { display: block; }
+        .btn-new-list { margin: 20px; padding: 10px; background-color: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        .btn-new-list:hover { opacity: 0.9; }
+
+        /* Panel Principal */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; padding: 30px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        
+        /* Buscador */
+        .search-container { position: relative; margin-bottom: 30px; }
+        .search-input { width: 100%; padding: 15px; font-size: 1rem; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); outline: none; transition: border-color 0.2s; }
+        .search-input:focus { border-color: var(--primary); }
+        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 10; display: none; list-style: none; }
+        .search-result-item { padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); }
+        .search-result-item:hover { background-color: var(--bg-color); }
+        .search-result-item strong { color: var(--primary); }
+
+        /* Tabla */
+        .table-container { background: var(--surface); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 15px; border-bottom: 1px solid var(--border); }
+        th { background-color: #f9fafb; font-weight: 600; color: var(--text-light); text-transform: uppercase; font-size: 0.85rem; }
+        tbody tr:hover { background-color: #f9fafb; }
+        .action-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2rem; }
+        
+        /* Footer Tabla */
+        .table-footer { display: flex; justify-content: flex-end; padding: 20px; background: var(--surface); font-size: 1.2rem; border-top: 2px solid var(--border); }
+        .table-footer strong { margin-left: 15px; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">Mis Listas</div>
+        <ul class="list-menu" id="listMenu">
+            </ul>
+        <button class="btn-new-list" onclick="crearNuevaLista()">+ Nueva Lista</button>
+    </aside>
+
+    <main class="main-content">
+        <div class="header">
+            <h1 id="activeListName">Selecciona una lista</h1>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Buscar local (Ej. Supermaxi, Juguetón...)" disabled>
+            <ul class="search-results" id="searchResults">
+                </ul>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Local</th>
+                        <th>Valor ($)</th>
+                        <th style="width: 80px; text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    </tbody>
+            </table>
+            <div class="table-footer">
+                <span>Total de la lista:</span>
+                <strong id="listTotal">$0.00</strong>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 1. Base de datos simulada (Catálogo extraído de las imágenes)
+        const catalogo = [
+            { id: 1, nombre: "Dollar Store Portoviejo", valor: 760 },
+            { id: 2, nombre: "Supermaxi Santo Domingo", valor: 0 },
+            { id: 3, nombre: "Gran Aki Cayambe", valor: 240 },
+            { id: 4, nombre: "Super Aki el Coca", valor: 483 },
+            { id: 5, nombre: "Aki Esmeraldas", valor: 515 },
+            { id: 6, nombre: "Supermaxi Ibarra", valor: 305 },
+            { id: 7, nombre: "Aki Otavalo", valor: 289 },
+            { id: 8, nombre: "Aki Quinindé", valor: 391 },
+            { id: 9, nombre: "Supermaxi Tulcán", valor: 481 },
+            { id: 10, nombre: "Megamaxi Mall Andes", valor: 264 },
+            { id: 11, nombre: "Aki Guaranda", valor: 403 },
+            { id: 12, nombre: "Gran Aki Babahoyo", valor: 662 },
+            { id: 13, nombre: "Supermaxi Policentro", valor: 856 },
+            { id: 14, nombre: "Super Aki Plaza Valle", valor: 35 },
+            { id: 15, nombre: "Aki Machachi", valor: 67 },
+            { id: 16, nombre: "Supermaxi Pomasqui", valor: 94 },
+            { id: 17, nombre: "Gran Aki Solanda", valor: 76 },
+            { id: 18, nombre: "Supermaxi El Jardín", valor: 76 }
+            // Puedes agregar el resto de locales siguiendo esta misma estructura
+        ];
+
+        // 2. Variables de estado
+        let listas = JSON.parse(localStorage.getItem('misListasLocales')) || [];
+        let listaActivaId = null;
+
+        // Elementos del DOM
+        const listMenu = document.getElementById('listMenu');
+        const activeListName = document.getElementById('activeListName');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const tableBody = document.getElementById('tableBody');
+        const listTotal = document.getElementById('listTotal');
+
+        // 3. Inicialización
+        function init() {
+            if (listas.length === 0) {
+                crearLista("Mi Primera Lista");
+            } else {
+                seleccionarLista(listas[0].id);
+            }
+            renderizarMenuLateral();
+        }
+
+        // 4. Funciones de Gestión de Listas
+        function crearNuevaLista() {
+            const nombre = prompt("Ingresa el nombre de la nueva lista:");
+            if (nombre && nombre.trim() !== "") {
+                crearLista(nombre.trim());
+            }
+        }
+
+        function crearLista(nombre) {
+            const nuevaLista = {
+                id: Date.now(), // ID único basado en el tiempo
+                nombre: nombre,
+                items: []
+            };
+            listas.push(nuevaLista);
+            guardarDatos();
+            seleccionarLista(nuevaLista.id);
+            renderizarMenuLateral();
+        }
+
+        function seleccionarLista(id) {
+            listaActivaId = id;
+            const lista = listas.find(l => l.id === id);
+            activeListName.textContent = lista.nombre;
+            searchInput.disabled = false;
+            searchInput.value = '';
+            searchResults.style.display = 'none';
+            renderizarTabla();
+            renderizarMenuLateral();
+        }
+
+        function eliminarLista(id, event) {
+            event.stopPropagation(); // Evita que se seleccione la lista al hacer clic en borrar
+            if(confirm("¿Estás seguro de que deseas eliminar esta lista completa?")) {
+                listas = listas.filter(l => l.id !== id);
+                guardarDatos();
+                if(listas.length > 0) {
+                    seleccionarLista(listas[0].id);
+                } else {
+                    listaActivaId = null;
+                    activeListName.textContent = "Crea una lista para empezar";
+                    searchInput.disabled = true;
+                    tableBody.innerHTML = '';
+                    listTotal.textContent = "$0.00";
+                }
+                renderizarMenuLateral();
+            }
+        }
+
+        // 5. Funciones de la Lista Activa (Agregar/Quitar items)
+        function agregarItem(idCatalogo) {
+            const local = catalogo.find(c => c.id === idCatalogo);
+            const listaActiva = listas.find(l => l.id === listaActivaId);
+            
+            // Clonamos el objeto para agregarlo a la lista (generando un ID único para la fila)
+            listaActiva.items.push({
+                rowId: Date.now(),
+                nombre: local.nombre,
+                valor: local.valor
+            });
+
+            guardarDatos();
+            renderizarTabla();
+            
+            // Limpiar buscador
+            searchInput.value = '';
+            searchResults.style.display = 'none';
+            searchInput.focus();
+        }
+
+        function eliminarItem(rowId) {
+            const listaActiva = listas.find(l => l.id === listaActivaId);
+            listaActiva.items = listaActiva.items.filter(item => item.rowId !== rowId);
+            guardarDatos();
+            renderizarTabla();
+        }
+
+        // 6. Buscador (Lógica)
+        searchInput.addEventListener('input', function(e) {
+            const texto = e.target.value.toLowerCase();
+            searchResults.innerHTML = '';
+
+            if (texto.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            const coincidencias = catalogo.filter(local => 
+                local.nombre.toLowerCase().includes(texto)
+            );
+
+            if (coincidencias.length > 0) {
+                coincidencias.forEach(local => {
+                    const li = document.createElement('li');
+                    li.className = 'search-result-item';
+                    li.innerHTML = `<span>${local.nombre}</span> <strong>$${local.valor}</strong>`;
+                    li.onclick = () => agregarItem(local.id);
+                    searchResults.appendChild(li);
+                });
+                searchResults.style.display = 'block';
+            } else {
+                searchResults.innerHTML = '<li class="search-result-item" style="color:gray; cursor:default;">No se encontraron resultados</li>';
+                searchResults.style.display = 'block';
+            }
+        });
+
+        // Ocultar buscador si se hace clic afuera
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        // 7. Funciones de Renderizado (Actualizar la vista)
+        function renderizarMenuLateral() {
+            listMenu.innerHTML = '';
+            listas.forEach(lista => {
+                const li = document.createElement('li');
+                li.className = `list-item ${lista.id === listaActivaId ? 'active' : ''}`;
+                li.onclick = () => seleccionarLista(lista.id);
+                li.innerHTML = `
+                    <span>${lista.nombre}</span>
+                    <button class="delete-list-btn" onclick="eliminarLista(${lista.id}, event)">✖</button>
+                `;
+                listMenu.appendChild(li);
+            });
+        }
+
+        function renderizarTabla() {
+            tableBody.innerHTML = '';
+            const listaActiva = listas.find(l => l.id === listaActivaId);
+            let suma = 0;
+
+            if (listaActiva && listaActiva.items.length > 0) {
+                listaActiva.items.forEach(item => {
+                    suma += item.valor;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${item.nombre}</td>
+                        <td>$${item.valor}</td>
+                        <td style="text-align: center;">
+                            <button class="action-btn" onclick="eliminarItem(${item.rowId})">🗑️</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:gray;">La lista está vacía. Busca locales arriba para agregarlos.</td></tr>';
+            }
+
+            listTotal.textContent = `$${suma}`;
+        }
+
+        // 8. Persistencia de Datos
+        function guardarDatos() {
+            // Guarda la información en la memoria del navegador
+            localStorage.setItem('misListasLocales', JSON.stringify(listas));
+        }
+
+        // Iniciar la aplicación
+        init();
+
+    </script>
+</body>
+</html>

@@ -19,6 +19,7 @@ export default function TarifarioClient({ tarifarios, userRole }: { tarifarios: 
   const [editTarifarioNombre, setEditTarifarioNombre] = useState('');
   
   const [editingPrecioId, setEditingPrecioId] = useState<string | null>(null);
+  const [editPrecioCodigo, setEditPrecioCodigo] = useState('');
   const [editPrecioDescripcion, setEditPrecioDescripcion] = useState('');
   const [editPrecioValor, setEditPrecioValor] = useState<number | string>('');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -86,7 +87,7 @@ export default function TarifarioClient({ tarifarios, userRole }: { tarifarios: 
   const handleSavePrecio = async (id: string) => {
     if (!editPrecioDescripcion.trim() || Number(editPrecioValor) < 0) return;
     setIsUpdating(true);
-    const res = await updatePrecioTarifario(id, editPrecioDescripcion, Number(editPrecioValor));
+    const res = await updatePrecioTarifario(id, editPrecioDescripcion, Number(editPrecioValor), editPrecioCodigo);
     setIsUpdating(false);
     if (res.success) {
       setEditingPrecioId(null);
@@ -188,7 +189,37 @@ export default function TarifarioClient({ tarifarios, userRole }: { tarifarios: 
                           <tbody>
                             {tarifario.precios.map((precio: any) => (
                               <tr key={precio.id}>
-                                <td style={{ fontWeight: 500 }}>{precio.codigo}</td>
+                                <td style={{ fontWeight: 500 }}>
+                                  {editingPrecioId === precio.id ? (
+                                    <input 
+                                      type="text" 
+                                      className="form-input" 
+                                      value={editPrecioCodigo} 
+                                      onChange={e => setEditPrecioCodigo(e.target.value.toUpperCase())} 
+                                      style={{ height: '32px', width: '90px' }}
+                                    />
+                                  ) : (
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                      <span>{precio.codigo}</span>
+                                      {(precio.codigo?.includes('*') || precio.descripcion?.includes('*')) && (
+                                        <span 
+                                          title="Código faltante rescatado de la lista anterior. Requiere cambiar o validar el valor." 
+                                          style={{ 
+                                            fontSize: '0.65rem', 
+                                            padding: '2px 6px', 
+                                            borderRadius: '9999px', 
+                                            backgroundColor: '#ffedd5', 
+                                            color: '#c2410c', 
+                                            fontWeight: 700,
+                                            border: '1px solid #fed7aa'
+                                          }}
+                                        >
+                                          * REVISAR
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
                                 <td>
                                   {editingPrecioId === precio.id ? (
                                     <input 
@@ -240,7 +271,7 @@ export default function TarifarioClient({ tarifarios, userRole }: { tarifarios: 
                                         </button>
                                       </div>
                                     ) : (
-                                      <button type="button" onClick={() => { setEditingPrecioId(precio.id); setEditPrecioDescripcion(precio.descripcion); setEditPrecioValor(precio.valor); }} style={{ backgroundColor: '#ef4444', border: 'none', cursor: 'pointer', color: 'white', padding: '6px 10px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'background-color 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} title="Editar">
+                                      <button type="button" onClick={() => { setEditingPrecioId(precio.id); setEditPrecioCodigo(precio.codigo); setEditPrecioDescripcion(precio.descripcion); setEditPrecioValor(precio.valor); }} style={{ backgroundColor: '#ef4444', border: 'none', cursor: 'pointer', color: 'white', padding: '6px 10px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'background-color 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} title="Editar">
                                         <Pencil size={14} />
                                       </button>
                                     )}

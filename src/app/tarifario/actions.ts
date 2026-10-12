@@ -19,14 +19,18 @@ export async function updateTarifarioNombre(id: string, nombre: string) {
   }
 }
 
-export async function updatePrecioTarifario(id: string, descripcion: string, valor: number) {
+export async function updatePrecioTarifario(id: string, descripcion: string, valor: number, codigo?: string) {
   try {
     if (!descripcion.trim() || valor < 0) {
       return { success: false, error: 'Datos inválidos' };
     }
+    const dataUpdate: any = { descripcion, valor };
+    if (codigo && codigo.trim()) {
+      dataUpdate.codigo = codigo.trim().toUpperCase();
+    }
     await prisma.guiaPrecio.update({
       where: { id },
-      data: { descripcion, valor },
+      data: dataUpdate,
     });
     revalidatePath('/tarifario');
     return { success: true };

@@ -125,11 +125,14 @@ export async function POST(req: NextRequest) {
 
         for (const prevCode of previousCodes) {
           let shouldMigrate = false;
+          let isMissingFromNew = false;
           
           if (prevCode.userId === null) {
-            // Código base: lo pasamos si no venía en el Excel
-            if (!addedStandardCodes.has(prevCode.codigo.toUpperCase())) {
+            // Código base: comprobar si vino en el nuevo Excel (comparando sin asterisco)
+            const cleanCode = prevCode.codigo.replace(/\*+$/, '').toUpperCase();
+            if (!addedStandardCodes.has(cleanCode)) {
               shouldMigrate = true;
+              isMissingFromNew = true;
             }
           } else {
             // Código personalizado: siempre se pasa al nuevo tarifario
@@ -137,13 +140,20 @@ export async function POST(req: NextRequest) {
           }
 
           if (shouldMigrate) {
+            // Si es un código que no venía en la nueva lista, le añadimos '*' al final
+            const baseCode = prevCode.codigo.replace(/\*+$/, '');
+            const baseDesc = prevCode.descripcion.trim().replace(/\s*\*+$/, '');
+
+            const codigoFinal = isMissingFromNew ? `${baseCode}*` : prevCode.codigo;
+            const descripcionFinal = isMissingFromNew ? `${baseDesc} *` : prevCode.descripcion;
+
             await tx.guiaPrecio.create({
               data: {
                 tarifarioId: nuevoTarifario.id,
                 userId: prevCode.userId,
-                codigo: prevCode.codigo,
+                codigo: codigoFinal,
                 tipo: prevCode.tipo,
-                descripcion: prevCode.descripcion,
+                descripcion: descripcionFinal,
                 valor: prevCode.valor
               }
             });

@@ -26,10 +26,13 @@ const AutocompleteInput = ({ value, onChange, options, placeholder, style, class
       e.preventDefault();
       if (show && activeIdx >= 0 && filtered[activeIdx]) {
         const selectedCode = filtered[activeIdx].codigo;
-        onChange(selectedCode);
         setShow(false);
         setActiveIdx(-1);
-        if (onSelect) onSelect(selectedCode);
+        if (onSelect) {
+          onSelect(selectedCode);
+        } else {
+          onChange(selectedCode);
+        }
       } else {
         setShow(false);
         if (onEnter) onEnter();
@@ -73,9 +76,12 @@ const AutocompleteInput = ({ value, onChange, options, placeholder, style, class
               onMouseEnter={() => setActiveIdx(idx)}
               onMouseDown={(e) => {
                 e.preventDefault(); // evita el blur del input
-                onChange(o.codigo);
                 setShow(false);
-                if (onSelect) onSelect(o.codigo);
+                if (onSelect) {
+                  onSelect(o.codigo);
+                } else {
+                  onChange(o.codigo);
+                }
               }}
             >
               <strong style={{ color: 'var(--primary)' }}>{o.codigo}</strong> 
@@ -248,28 +254,37 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
     setShowTarifarioNotification(false);
   };
 
-  const handleAddCodigo = (e?: React.FormEvent, directCode?: string) => {
+  const handleAddCodigo = (e?: React.FormEvent, directCode?: string): string[] => {
     e?.preventDefault();
     const targetCode = (directCode || nuevoCodigo).trim().toUpperCase();
-    if (!targetCode) return;
+    if (!targetCode) return codigos;
     
-    setCodigos(prev => prev.includes(targetCode) ? prev : [...prev, targetCode]);
+    let nuevosCodigos = codigos;
+    if (!codigos.includes(targetCode)) {
+      nuevosCodigos = [...codigos, targetCode];
+      setCodigos(nuevosCodigos);
+    }
     setNuevoCodigo('');
     setPrecioPreview(null);
+    return nuevosCodigos;
   };
 
   const handleRemoveCodigo = (index: number) => {
-    setCodigos(codigos.filter((_, i) => i !== index));
+    const updated = codigos.filter((_, i) => i !== index);
+    setCodigos(updated);
     setPrecioPreview(null);
+    if (updated.length > 0) {
+      handleBuscarPrecio(updated);
+    }
   };
 
-  const handleBuscarPrecio = async () => {
+  const handleBuscarPrecio = async (overrideCodigos?: string[]) => {
     setError(null);
     setPrecioPreview(null);
     
-    // Si hay un código en el input que no se ha añadido, lo añadimos primero
-    let codigosEvaluar = [...codigos];
-    if (nuevoCodigo.trim()) {
+    // Si se pasan códigos explícitos, se usan esos y no se lee el input residual
+    let codigosEvaluar = overrideCodigos ? [...overrideCodigos] : [...codigos];
+    if (!overrideCodigos && nuevoCodigo.trim()) {
       const code = nuevoCodigo.trim().toUpperCase();
       if (!codigosEvaluar.includes(code)) {
         codigosEvaluar.push(code);
@@ -564,16 +579,30 @@ export default function RegistroGuiaClient({ cabezales, ultimoTarifario }: { cab
                 options={ultimoTarifario?.precios}
                 placeholder="Ej. 343 o 343S" 
                 onEnter={() => {
-                  handleAddCodigo();
-                  setTimeout(() => handleBuscarPrecio(), 50);
+                  const updated = handleAddCodigo();
+                  if (updated && updated.length > 0) {
+                    handleBuscarPrecio(updated);
+                  }
                 }}
                 onSelect={(code: string) => {
-                  handleAddCodigo(undefined, code);
-                  setTimeout(() => handleBuscarPrecio(), 50);
+                  const updated = handleAddCodigo(undefined, code);
+                  if (updated && updated.length > 0) {
+                    handleBuscarPrecio(updated);
+                  }
                 }}
               />
               
-              <button type="button" onClick={handleAddCodigo} className="btn btn-secondary" style={{ padding: '0.5rem 1rem' }}>
+              <button 
+                type="button" 
+                onClick={() => {
+                  const updated = handleAddCodigo();
+                  if (updated && updated.length > 0) {
+                    handleBuscarPrecio(updated);
+                  }
+                }} 
+                className="btn btn-secondary" 
+                style={{ padding: '0.5rem 1rem' }}
+              >
                 <span className="desktop-only">Añadir Código</span>
                 <span className="mobile-only">+</span>
               </button>
