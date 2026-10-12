@@ -74,7 +74,7 @@ export default function MobileNavbar({ user }: { user: any }) {
       {/* Drawer Content */}
       <div className={`mobile-drawer ${isDrawerOpen ? 'open' : ''}`}>
         <div className="mobile-drawer-header" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div style={{ position: 'relative', width: '42px', height: '42px', flexShrink: 0, borderRadius: '10px', overflow: 'hidden' }}>
+          <div style={{ position: 'relative', width: '42px', height: '42px', flexShrink: 0 }}>
             <Image src="/logo.png" alt="Logo" fill sizes="42px" unoptimized style={{ objectFit: 'contain' }} />
           </div>
           <div>

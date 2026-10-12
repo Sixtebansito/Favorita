@@ -30,7 +30,7 @@ export default function Sidebar({ user }: { user: any }) {
   return (
     <aside className="sidebar">
       <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: 'center' }}>
-        <div className="sidebar-text" style={{ position: 'relative', width: '60px', height: '60px', marginBottom: '0.5rem', borderRadius: '14px', overflow: 'hidden' }}>
+        <div className="sidebar-text" style={{ position: 'relative', width: '60px', height: '60px', marginBottom: '0.5rem' }}>
           <Image src="/logo.png" alt="Logo" fill sizes="60px" unoptimized style={{ objectFit: 'contain' }} />
         </div>
         <p className="sidebar-text" style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', textAlign: 'center' }}>Gestión de Transporte</p>
